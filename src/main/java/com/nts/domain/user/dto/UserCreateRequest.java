@@ -1,9 +1,13 @@
 package com.nts.domain.user.dto;
 
 import com.nts.domain.user.User;
-import lombok.Getter;
+import lombok.*;
 
 @Getter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode
 public class UserCreateRequest {
     private String name;
     private String password;
