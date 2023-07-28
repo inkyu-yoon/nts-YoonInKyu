@@ -2,9 +2,7 @@ package com.nts.service;
 
 import com.nts.domain.post.Post;
 import com.nts.domain.post.PostRepository;
-import com.nts.domain.post.dto.PostCreateRequest;
-import com.nts.domain.post.dto.PostCreateResponse;
-import com.nts.domain.post.dto.PostGetResponse;
+import com.nts.domain.post.dto.*;
 import com.nts.domain.user.User;
 import com.nts.domain.user.UserRepository;
 import com.nts.global.encrypt.PasswordEncryption;
@@ -58,6 +56,7 @@ class PostServiceTest {
     PostCreateRequest postCreateRequest;
     PostGetResponse postGetResponse;
 
+    PostUpdateRequest postUpdateRequest;
 
     @BeforeEach
     void setUp() {
@@ -76,6 +75,11 @@ class PostServiceTest {
                 .createdDate(createdDate)
                 .build();
 
+        postUpdateRequest = PostUpdateRequest.builder()
+                .password(password)
+                .title(title)
+                .body(body)
+                .build();
     }
 
     @Nested
@@ -199,5 +203,80 @@ class PostServiceTest {
             verify(postRepository, atLeastOnce()).findById(postId);
         }
 
+    }
+
+    @Nested
+    @DisplayName("게시글 수정 테스트")
+    class UpdatePost {
+
+        @Test
+        @DisplayName("성공")
+        void updatePost_success() {
+            //given
+            given(postRepository.findById(postId))
+                    .willReturn(Optional.of(mockPost));
+            given(mockPost.getUser())
+                    .willReturn(mockUser);
+            given(mockPost.getId())
+                    .willReturn(postId);
+            given(mockPost.getTitle())
+                    .willReturn(title);
+            given(encryption.encrypt(password))
+                    .willReturn(encryptedPassword);
+            given(mockUser.validatePassword(encryptedPassword))
+                    .willReturn(true);
+            willDoNothing().given(mockPost)
+                    .update(title, body);
+
+
+            //when
+            PostUpdateResponse response = postService.updatePost(postUpdateRequest,postId);
+
+            //then
+            assertThat(response).isNotNull();
+            assertThat(response.getPostId()).isEqualTo(postId);
+            assertThat(response.getTitle()).isEqualTo(title);
+            verify(postRepository, atLeastOnce()).findById(postId);
+            verify(encryption, atLeastOnce()).encrypt(password);
+            verify(mockUser, atLeastOnce()).validatePassword(encryptedPassword);
+        }
+
+        @Test
+        @DisplayName("존재하지 않은 게시글에 수정 요청 시 예외가 발생")
+        void updatePost_fail_postNotFound() {
+            //given
+            given(postRepository.findById(postId))
+                    .willReturn(Optional.empty());
+
+            //when
+            AppException appException = assertThrows(AppException.class, () -> postService.updatePost(postUpdateRequest,postId));
+
+            //then
+            assertThat(appException.getErrorCode()).isEqualTo(POST_NOT_FOUND);
+            verify(postRepository, atLeastOnce()).findById(postId);
+        }
+
+        @Test
+        @DisplayName("요청한 사용자의 비밀번호가 일치하지 않는 경우 예외가 발생")
+        void updatePost_fail_invalidPassword() {
+            //given
+            given(postRepository.findById(postId))
+                    .willReturn(Optional.of(mockPost));
+            given(mockPost.getUser())
+                    .willReturn(mockUser);
+            given(encryption.encrypt(password))
+                    .willReturn(encryptedPassword);
+            given(mockUser.validatePassword(encryptedPassword))
+                    .willReturn(false);
+
+            //when
+            AppException appException = assertThrows(AppException.class, () -> postService.updatePost(postUpdateRequest,postId));
+
+            //then
+            assertThat(appException.getErrorCode()).isEqualTo(INVALID_PASSWORD);
+            verify(postRepository, atLeastOnce()).findById(postId);
+            verify(encryption, atLeastOnce()).encrypt(password);
+            verify(mockUser, atLeastOnce()).validatePassword(encryptedPassword);
+        }
     }
 }
