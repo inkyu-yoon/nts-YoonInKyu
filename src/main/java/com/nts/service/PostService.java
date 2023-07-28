@@ -4,6 +4,7 @@ import com.nts.domain.post.Post;
 import com.nts.domain.post.PostRepository;
 import com.nts.domain.post.dto.PostCreateRequest;
 import com.nts.domain.post.dto.PostCreateResponse;
+import com.nts.domain.post.dto.PostGetResponse;
 import com.nts.domain.user.User;
 import com.nts.domain.user.UserRepository;
 import com.nts.global.encrypt.PasswordEncryption;
@@ -54,5 +55,19 @@ public class PostService {
         }
 
         return foundUser;
+    }
+
+    /**
+     * 게시글 단건 상세 조회
+     * 단건 조회 요청 시 조회수 증가
+     */
+    public PostGetResponse getPost(Long postId) {
+        Post foundPost = postRepository.findById(postId)
+                .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_FOUND));
+
+        // @Modifying 이용해서 동시성 처리
+        postRepository.increaseViewCount(postId);
+
+        return PostGetResponse.from(foundPost);
     }
 }
