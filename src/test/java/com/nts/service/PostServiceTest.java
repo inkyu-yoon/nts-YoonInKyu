@@ -58,6 +58,9 @@ class PostServiceTest {
 
     PostUpdateRequest postUpdateRequest;
 
+    PostDeleteRequest postDeleteRequest;
+
+
     @BeforeEach
     void setUp() {
         postCreateRequest = PostCreateRequest.builder()
@@ -80,6 +83,11 @@ class PostServiceTest {
                 .title(title)
                 .body(body)
                 .build();
+
+        postDeleteRequest = PostDeleteRequest.builder()
+                .password(password)
+                .build();
+
     }
 
     @Nested
@@ -271,6 +279,82 @@ class PostServiceTest {
 
             //when
             AppException appException = assertThrows(AppException.class, () -> postService.updatePost(postUpdateRequest,postId));
+
+            //then
+            assertThat(appException.getErrorCode()).isEqualTo(INVALID_PASSWORD);
+            verify(postRepository, atLeastOnce()).findById(postId);
+            verify(encryption, atLeastOnce()).encrypt(password);
+            verify(mockUser, atLeastOnce()).validatePassword(encryptedPassword);
+        }
+    }
+
+    @Nested
+    @DisplayName("게시글 삭제 테스트")
+    class DeletePost {
+
+        @Test
+        @DisplayName("성공")
+        void deletePost_success() {
+            //given
+            given(postRepository.findById(postId))
+                    .willReturn(Optional.of(mockPost));
+            given(mockPost.getUser())
+                    .willReturn(mockUser);
+            given(mockPost.getId())
+                    .willReturn(postId);
+            given(mockPost.getTitle())
+                    .willReturn(title);
+            given(encryption.encrypt(password))
+                    .willReturn(encryptedPassword);
+            given(mockUser.validatePassword(encryptedPassword))
+                    .willReturn(true);
+            willDoNothing().given(postRepository)
+                    .delete(mockPost);
+
+
+            //when
+            PostDeleteResponse response = postService.deletePost(postDeleteRequest,postId);
+
+            //then
+            assertThat(response).isNotNull();
+            assertThat(response.getPostId()).isEqualTo(postId);
+            assertThat(response.getTitle()).isEqualTo(title);
+            verify(postRepository, atLeastOnce()).findById(postId);
+            verify(encryption, atLeastOnce()).encrypt(password);
+            verify(mockUser, atLeastOnce()).validatePassword(encryptedPassword);
+            verify(postRepository, atLeastOnce()).delete(mockPost);
+        }
+
+        @Test
+        @DisplayName("존재하지 않은 게시글에 삭제 요청 시 예외가 발생")
+        void deletePost_fail_postNotFound() {
+            //given
+            given(postRepository.findById(postId))
+                    .willReturn(Optional.empty());
+
+            //when
+            AppException appException = assertThrows(AppException.class, () -> postService.deletePost(postDeleteRequest,postId));
+
+            //then
+            assertThat(appException.getErrorCode()).isEqualTo(POST_NOT_FOUND);
+            verify(postRepository, atLeastOnce()).findById(postId);
+        }
+
+        @Test
+        @DisplayName("요청한 사용자의 비밀번호가 일치하지 않는 경우 예외가 발생")
+        void deletePost_fail_invalidPassword() {
+            //given
+            given(postRepository.findById(postId))
+                    .willReturn(Optional.of(mockPost));
+            given(mockPost.getUser())
+                    .willReturn(mockUser);
+            given(encryption.encrypt(password))
+                    .willReturn(encryptedPassword);
+            given(mockUser.validatePassword(encryptedPassword))
+                    .willReturn(false);
+
+            //when
+            AppException appException = assertThrows(AppException.class, () -> postService.deletePost(postDeleteRequest,postId));
 
             //then
             assertThat(appException.getErrorCode()).isEqualTo(INVALID_PASSWORD);

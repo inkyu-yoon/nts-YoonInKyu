@@ -54,6 +54,8 @@ class PostApiControllerTest {
     PostGetResponse postGetResponse;
     PostUpdateRequest postUpdateRequest;
     PostUpdateResponse postUpdateResponse;
+    PostDeleteRequest postDeleteRequest;
+    PostDeleteResponse postDeleteResponse;
 
     @BeforeEach
     void setUp() {
@@ -88,6 +90,14 @@ class PostApiControllerTest {
                 .title(title)
                 .build();
 
+        postDeleteRequest = PostDeleteRequest.builder()
+                .password(password)
+                .build();
+
+        postDeleteResponse = PostDeleteResponse.builder()
+                .postId(postId)
+                .title(title)
+                .build();
     }
 
     @Nested
@@ -221,6 +231,56 @@ class PostApiControllerTest {
             mockMvc.perform(put("/api/v1/posts/" + postId)
                             .contentType(APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(postUpdateRequest)))
+                    .andDo(print())
+                    .andExpect(status().is(responseStatus))
+                    .andExpect(jsonPath("$.message").exists())
+                    .andExpect(jsonPath("$.message").value("ERROR"))
+                    .andExpect(jsonPath("$.result").exists())
+                    .andExpect(jsonPath("$.result").value(errorMessage));
+
+        }
+
+    }
+
+    @Nested
+    @DisplayName("게시글 삭제 테스트")
+    class DeletePost {
+
+        @Test
+        @DisplayName("성공")
+        void deletePost_success() throws Exception {
+            given(postService.deletePost(postDeleteRequest, postId))
+                    .willReturn(postDeleteResponse);
+
+            mockMvc.perform(delete("/api/v1/posts/" + postId)
+                            .contentType(APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(postDeleteRequest)))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.message").exists())
+                    .andExpect(jsonPath("$.message").value("SUCCESS"))
+                    .andExpect(jsonPath("$.result").exists())
+                    .andExpect(jsonPath("$.result.postId").value(postId))
+                    .andExpect(jsonPath("$.result.title").value(title));
+        }
+
+        private static Stream<Arguments> providePostDeleteFailScenarios() {
+            return Stream.of(
+                    Arguments.of(POST_NOT_FOUND, 404, "등록된 게시글을 찾을 수 없습니다."),
+                    Arguments.of(INVALID_PASSWORD, 401, "비밀번호가 일치하지 않습니다.")
+            );
+        }
+
+        @DisplayName("실패")
+        @ParameterizedTest
+        @MethodSource("providePostDeleteFailScenarios")
+        void deletePost_fail(ErrorCode errorCode, int responseStatus, String errorMessage) throws Exception {
+            when(postService.deletePost(any(), anyLong()))
+                    .thenThrow(new AppException(errorCode));
+
+            mockMvc.perform(delete("/api/v1/posts/" + postId)
+                            .contentType(APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(postDeleteRequest)))
                     .andDo(print())
                     .andExpect(status().is(responseStatus))
                     .andExpect(jsonPath("$.message").exists())
