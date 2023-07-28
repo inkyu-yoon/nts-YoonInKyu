@@ -81,6 +81,21 @@ public class PostService {
     }
 
     /**
+     * 게시글 삭제
+     */
+    public PostDeleteResponse deletePost(PostDeleteRequest requestDto, Long postId) {
+        Post foundPost = postRepository.findById(postId)
+                .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_FOUND));
+
+        // 삭제 요청자가 게시글 작성자의 비밀번호인지 확인
+        validatePassword(requestDto.getPassword(), foundPost.getUser());
+
+        postRepository.delete(foundPost);
+
+        return PostDeleteResponse.from(foundPost);
+    }
+
+    /**
      * 비밀번호가 일치하는지 확인
      */
     private void validatePassword(String password, User foundUser) {
@@ -91,4 +106,6 @@ public class PostService {
             throw new AppException(ErrorCode.INVALID_PASSWORD);
         }
     }
+
+
 }

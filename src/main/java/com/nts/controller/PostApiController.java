@@ -40,4 +40,11 @@ public class PostApiController {
         return ResponseEntity.ok(Response.success(response));
     }
 
+    @DeleteMapping("/{postId}")
+    public ResponseEntity<Response<PostDeleteResponse>> update(@RequestBody PostDeleteRequest requestDto, @PathVariable(name = "postId") Long postId) {
+
+        PostDeleteResponse response = postService.deletePost(requestDto, postId);
+
+        return ResponseEntity.ok(Response.success(response));
+    }
 }
