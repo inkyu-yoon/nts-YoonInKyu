@@ -1,8 +1,6 @@
 package com.nts.controller;
 
-import com.nts.domain.post.dto.PostCreateRequest;
-import com.nts.domain.post.dto.PostCreateResponse;
-import com.nts.domain.post.dto.PostGetResponse;
+import com.nts.domain.post.dto.*;
 import com.nts.global.Response;
 import com.nts.service.PostService;
 import lombok.RequiredArgsConstructor;
@@ -33,4 +31,13 @@ public class PostApiController {
 
         return ResponseEntity.ok(Response.success(response));
     }
+
+    @PutMapping("/{postId}")
+    public ResponseEntity<Response<PostUpdateResponse>> update(@RequestBody PostUpdateRequest requestDto, @PathVariable(name = "postId") Long postId) {
+
+        PostUpdateResponse response = postService.updatePost(requestDto, postId);
+
+        return ResponseEntity.ok(Response.success(response));
+    }
+
 }

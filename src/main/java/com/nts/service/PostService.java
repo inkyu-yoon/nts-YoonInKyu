@@ -2,9 +2,7 @@ package com.nts.service;
 
 import com.nts.domain.post.Post;
 import com.nts.domain.post.PostRepository;
-import com.nts.domain.post.dto.PostCreateRequest;
-import com.nts.domain.post.dto.PostCreateResponse;
-import com.nts.domain.post.dto.PostGetResponse;
+import com.nts.domain.post.dto.*;
 import com.nts.domain.user.User;
 import com.nts.domain.user.UserRepository;
 import com.nts.global.encrypt.PasswordEncryption;
@@ -47,12 +45,8 @@ public class PostService {
         User foundUser = userRepository.findUserByName(requestDto.getName())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
-        String encryptedPassword = encryption.encrypt(requestDto.getPassword());
-
-        // 비밀번호가 일치하는지 확인
-        if (!foundUser.validatePassword(encryptedPassword)) {
-            throw new AppException(ErrorCode.INVALID_PASSWORD);
-        }
+        // 비밀번호 일치하는지 확인
+        validatePassword(requestDto.getPassword(), foundUser);
 
         return foundUser;
     }
@@ -69,5 +63,32 @@ public class PostService {
         postRepository.increaseViewCount(postId);
 
         return PostGetResponse.from(foundPost);
+    }
+
+    /**
+     * 게시글 수정
+     */
+    public PostUpdateResponse updatePost(PostUpdateRequest requestDto, Long postId) {
+        Post foundPost = postRepository.findById(postId)
+                .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_FOUND));
+
+        // 수정 요청자가 게시글 작성자의 비밀번호인지 확인
+        validatePassword(requestDto.getPassword(), foundPost.getUser());
+
+        foundPost.update(requestDto.getTitle(), requestDto.getBody());
+
+        return PostUpdateResponse.from(foundPost);
+    }
+
+    /**
+     * 비밀번호가 일치하는지 확인
+     */
+    private void validatePassword(String password, User foundUser) {
+        String encryptedPassword = encryption.encrypt(password);
+
+        // 비밀번호가 일치하는지 확인
+        if (!foundUser.validatePassword(encryptedPassword)) {
+            throw new AppException(ErrorCode.INVALID_PASSWORD);
+        }
     }
 }
