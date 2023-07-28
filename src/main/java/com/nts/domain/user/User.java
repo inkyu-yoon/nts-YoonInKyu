@@ -30,5 +30,7 @@ public class User {
     }
 
 
-
+    public boolean validatePassword(String encryptedPassword) {
+        return this.password.equals(encryptedPassword);
+    }
 }
