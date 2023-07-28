@@ -1,8 +1,12 @@
 package com.nts.service;
 
+import com.nts.domain.hashtag.Hashtag;
+import com.nts.domain.hashtag.HashtagRepository;
 import com.nts.domain.post.Post;
 import com.nts.domain.post.PostRepository;
 import com.nts.domain.post.dto.*;
+import com.nts.domain.postHashtag.PostHashtag;
+import com.nts.domain.postHashtag.PostHashtagRepository;
 import com.nts.domain.user.User;
 import com.nts.domain.user.UserRepository;
 import com.nts.global.encrypt.PasswordEncryption;
@@ -12,6 +16,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -19,6 +27,9 @@ public class PostService {
 
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+
+    private final HashtagRepository hashtagRepository;
+    private final PostHashtagRepository postHashtagRepository;
     private final PasswordEncryption encryption;
 
     /**
@@ -32,8 +43,40 @@ public class PostService {
         //게시글 저장
         Post savedPost = postRepository.save(requestDto.toEntity(foundUser));
 
+        List<String> hashtags = requestDto.getHashtags();
+
+        // 해시태그의 수는 최대 5개
+        validateHashtagsSize(hashtags);
+
+        saveNewHashtagsAndLinkToPost(savedPost, hashtags);
+
         return PostCreateResponse.from(savedPost);
     }
+
+    /**
+     * 새로운 해시태그 등록 및 게시글과 연결
+     */
+    private void saveNewHashtagsAndLinkToPost(Post savedPost, List<String> hashtags) {
+        // 이미 존재하는 해시태그 추출
+        List<Hashtag> existingHashtags = hashtagRepository.findHashtagByNameIn(hashtags);
+
+        // 새롭게 등록(저장)해야하는 해시태그 추출
+        List<Hashtag> newHashtags = hashtags.stream()
+                .filter(name -> existingHashtags.stream().noneMatch(hashtag -> hashtag.getName().equals(name)))
+                .map(name -> Hashtag.of(name))
+                .collect(Collectors.toList());
+
+        // 새로운 해시태그 등록
+        hashtagRepository.saveAll(newHashtags);
+
+        // 해시태그와 게시글 연결
+        List<PostHashtag> postHashtags = Stream.concat(existingHashtags.stream(), newHashtags.stream())
+                .map(hashtag -> PostHashtag.of(hashtag, savedPost))
+                .collect(Collectors.toList());
+
+        postHashtagRepository.saveAll(postHashtags);
+    }
+
 
     /**
      * 사용자명이 등록된 사용자인지 확인합니다.
@@ -52,6 +95,15 @@ public class PostService {
     }
 
     /**
+     * 해시태그 개수가 5개를 초과하는 경우 예외 처리
+     */
+    private void validateHashtagsSize(List<String> hashtags) {
+        if (hashtags.size() > 5) {
+            throw new AppException(ErrorCode.EXCEED_HASHTAG_SIZE);
+        }
+    }
+
+    /**
      * 게시글 단건 상세 조회
      * 단건 조회 요청 시 조회수 증가
      */
@@ -62,7 +114,9 @@ public class PostService {
         // @Modifying 이용해서 동시성 처리
         postRepository.increaseViewCount(postId);
 
-        return PostGetResponse.from(foundPost);
+        List<String> hashtagNames = postHashtagRepository.getHashtagNamesByPostId(postId);
+
+        return PostGetResponse.from(foundPost,hashtagNames);
     }
 
     /**
@@ -76,6 +130,16 @@ public class PostService {
         validatePassword(requestDto.getPassword(), foundPost.getUser());
 
         foundPost.update(requestDto.getTitle(), requestDto.getBody());
+
+        List<String> hashtags = requestDto.getHashtags();
+
+        // 해시태그의 수는 최대 5개
+        validateHashtagsSize(hashtags);
+
+        // 게시글 수정 시, 해시태그도 변경이 있을 수 있으므로 재등록하기위해 초기화
+        postHashtagRepository.deleteAllByPost(foundPost);
+
+        saveNewHashtagsAndLinkToPost(foundPost, hashtags);
 
         return PostUpdateResponse.from(foundPost);
     }
