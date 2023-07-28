@@ -4,6 +4,7 @@ import com.nts.domain.post.Post;
 import com.nts.domain.post.PostRepository;
 import com.nts.domain.post.dto.PostCreateRequest;
 import com.nts.domain.post.dto.PostCreateResponse;
+import com.nts.domain.post.dto.PostGetResponse;
 import com.nts.domain.user.User;
 import com.nts.domain.user.UserRepository;
 import com.nts.global.encrypt.PasswordEncryption;
@@ -17,10 +18,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
-import static com.nts.global.exception.ErrorCode.INVALID_PASSWORD;
-import static com.nts.global.exception.ErrorCode.USER_NOT_FOUND;
+import static com.nts.global.exception.ErrorCode.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.BDDMockito.*;
@@ -50,8 +51,13 @@ class PostServiceTest {
     String encryptedPassword = "encryptedPassword";
     String title = "title";
     String body = "body";
+    Long postId = 1L;
+    Long viewCount = 1L;
+    String createdDate = "2023/07/28 00:00";
 
     PostCreateRequest postCreateRequest;
+    PostGetResponse postGetResponse;
+
 
     @BeforeEach
     void setUp() {
@@ -61,11 +67,20 @@ class PostServiceTest {
                 .title(title)
                 .body(body)
                 .build();
+
+        postGetResponse = PostGetResponse.builder()
+                .postId(postId)
+                .title(title)
+                .body(body)
+                .viewCount(viewCount)
+                .createdDate(createdDate)
+                .build();
+
     }
 
     @Nested
     @DisplayName("게시글 작성 테스트")
-    class CreatePost{
+    class CreatePost {
 
         @Test
         @DisplayName("성공")
@@ -91,12 +106,12 @@ class PostServiceTest {
             verify(userRepository, atLeastOnce()).findUserByName(name);
             verify(encryption, atLeastOnce()).encrypt(password);
             verify(mockUser, atLeastOnce()).validatePassword(encryptedPassword);
-            verify(postRepository,atLeastOnce()).save(any(Post.class));
+            verify(postRepository, atLeastOnce()).save(any(Post.class));
         }
 
         @Test
         @DisplayName("등록되지 않은 사용자가 요청 시 예외가 발생")
-        void createPost_fail_userNotFound(){
+        void createPost_fail_userNotFound() {
             //given
             given(userRepository.findUserByName(name))
                     .willReturn(Optional.empty());
@@ -111,7 +126,7 @@ class PostServiceTest {
 
         @Test
         @DisplayName("요청한 사용자의 비밀번호가 일치하지 않는 경우 예외가 발생")
-        void createPost_fail_invalidPassword(){
+        void createPost_fail_invalidPassword() {
             //given
             given(userRepository.findUserByName(name))
                     .willReturn(Optional.of(mockUser));
@@ -131,4 +146,58 @@ class PostServiceTest {
         }
     }
 
+    @Nested
+    @DisplayName("게시글 단건 조회 테스트")
+    class GetPost {
+
+        @Test
+        @DisplayName("성공")
+        void getPost_success() {
+            //given
+            given(postRepository.findById(postId))
+                    .willReturn(Optional.of(mockPost));
+            willDoNothing().given(postRepository)
+                    .increaseViewCount(postId);
+            given(mockPost.getId())
+                    .willReturn(postId);
+            given(mockPost.getTitle())
+                    .willReturn(title);
+            given(mockPost.getBody())
+                    .willReturn(body);
+            given(mockPost.getViewCount())
+                    .willReturn(viewCount);
+            given(mockPost.getCreatedDate())
+                    .willReturn(LocalDateTime.of(2023,7,28,0,0));
+
+
+            //when
+            PostGetResponse response = postService.getPost(postId);
+
+            //then
+            assertThat(response).isNotNull();
+            assertThat(response.getPostId()).isEqualTo(postId);
+            assertThat(response.getTitle()).isEqualTo(title);
+            assertThat(response.getBody()).isEqualTo(body);
+            assertThat(response.getViewCount()).isEqualTo(viewCount+1);
+            assertThat(response.getCreatedDate()).isEqualTo(createdDate);
+            verify(postRepository, atLeastOnce()).findById(postId);
+            verify(postRepository, atLeastOnce()).increaseViewCount(postId);
+        }
+
+        @Test
+        @DisplayName("존재하지 않은 postId 조회 요청 시 실패")
+        void getPost_error() {
+            //given
+            given(postRepository.findById(postId))
+                    .willReturn(Optional.empty());
+
+            //when
+            AppException appException = assertThrows(AppException.class, () -> postService.getPost(postId));
+
+            //then
+            assertThat(appException.getErrorCode()).isEqualTo(POST_NOT_FOUND);
+            verify(postRepository, atLeastOnce()).findById(postId);
+        }
+
+    }
 }

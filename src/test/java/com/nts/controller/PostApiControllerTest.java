@@ -3,6 +3,7 @@ package com.nts.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nts.domain.post.dto.PostCreateRequest;
 import com.nts.domain.post.dto.PostCreateResponse;
+import com.nts.domain.post.dto.PostGetResponse;
 import com.nts.global.exception.AppException;
 import com.nts.global.exception.ErrorCode;
 import com.nts.service.PostService;
@@ -27,6 +28,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -48,9 +50,12 @@ class PostApiControllerTest {
     String title = "title";
     String body = "body";
     Long postId = 1L;
+    Long viewCount = 1L;
+    String createdDate = "createdDate";
 
     PostCreateRequest postCreateRequest;
     PostCreateResponse postCreateResponse;
+    PostGetResponse postGetResponse;
 
     @BeforeEach
     void setUp() {
@@ -64,6 +69,14 @@ class PostApiControllerTest {
         postCreateResponse = PostCreateResponse.builder()
                 .postId(postId)
                 .title(title)
+                .build();
+
+        postGetResponse = PostGetResponse.builder()
+                .postId(postId)
+                .title(title)
+                .body(body)
+                .viewCount(viewCount)
+                .createdDate(createdDate)
                 .build();
 
     }
@@ -113,6 +126,48 @@ class PostApiControllerTest {
                     .andExpect(jsonPath("$.message").value("ERROR"))
                     .andExpect(jsonPath("$.result").exists())
                     .andExpect(jsonPath("$.result").value(errorMessage));
+
+        }
+
+    }
+
+    @Nested
+    @DisplayName("게시글 조회 테스트")
+    class GetPost {
+
+        @Test
+        @DisplayName("성공")
+        void GetPost_success() throws Exception {
+            given(postService.getPost(postId))
+                    .willReturn(postGetResponse);
+
+            mockMvc.perform(get("/api/v1/posts/"+postId))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.message").exists())
+                    .andExpect(jsonPath("$.message").value("SUCCESS"))
+                    .andExpect(jsonPath("$.result").exists())
+                    .andExpect(jsonPath("$.result.postId").value(postId))
+                    .andExpect(jsonPath("$.result.title").value(title))
+                    .andExpect(jsonPath("$.result.body").value(body))
+                    .andExpect(jsonPath("$.result.viewCount").value(viewCount))
+                    .andExpect(jsonPath("$.result.createdDate").value(createdDate));
+        }
+
+
+        @DisplayName("존재하지 않는 postId 조회 요청 시 실패")
+        @Test
+        void createPost_fail() throws Exception {
+            when(postService.getPost(postId))
+                    .thenThrow(new AppException(POST_NOT_FOUND));
+
+            mockMvc.perform(get("/api/v1/posts/"+postId))
+                    .andDo(print())
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.message").exists())
+                    .andExpect(jsonPath("$.message").value("ERROR"))
+                    .andExpect(jsonPath("$.result").exists())
+                    .andExpect(jsonPath("$.result").value("등록된 게시글을 찾을 수 없습니다."));
 
         }
 
