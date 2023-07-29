@@ -139,7 +139,7 @@ class PostApiControllerTest {
         @ParameterizedTest
         @MethodSource("providePostCreateFailScenarios")
         void createPost_fail(ErrorCode errorCode, int responseStatus, String errorMessage) throws Exception {
-            when(postService.createPost(any(),anyLong()))
+            when(userService.validateUser(any(),any()))
                     .thenThrow(new AppException(errorCode));
 
             mockMvc.perform(post("/api/v1/posts")
@@ -155,7 +155,7 @@ class PostApiControllerTest {
         }
 
         @Test
-        @DisplayName("성공")
+        @DisplayName("해시태그 개수 초과시 실패")
         void createPost_fail_exceedHashtag() throws Exception {
             given(userService.validateUser(name, password))
                     .willReturn(userId);
