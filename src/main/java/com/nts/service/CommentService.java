@@ -38,6 +38,8 @@ public class CommentService {
 
         Comment savedComment = commentRepository.save(requestDto.toEntity(foundUser, foundPost));
 
+        postRepository.increaseCommentCount(postId);
+
         return CommentCreateResponse.from(savedComment);
     }
 
