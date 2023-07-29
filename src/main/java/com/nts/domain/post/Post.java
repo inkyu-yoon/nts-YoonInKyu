@@ -27,6 +27,7 @@ public class Post extends BaseEntity {
     private String body;
 
     private Long viewCount;
+    private Long likeCount;
 
     @Builder
     public Post(User user, String title, String body) {
@@ -35,6 +36,7 @@ public class Post extends BaseEntity {
         Assert.hasText(body, "body must not be empty");
 
         this.viewCount = 0L;
+        this.likeCount = 0L;
         this.user = user;
         this.title = title;
         this.body = body;
