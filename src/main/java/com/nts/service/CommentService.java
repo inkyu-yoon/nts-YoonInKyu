@@ -2,10 +2,7 @@ package com.nts.service;
 
 import com.nts.domain.comment.Comment;
 import com.nts.domain.comment.CommentRepository;
-import com.nts.domain.comment.dto.CommentCreateRequest;
-import com.nts.domain.comment.dto.CommentCreateResponse;
-import com.nts.domain.comment.dto.CommentDeleteRequest;
-import com.nts.domain.comment.dto.CommentDeleteResponse;
+import com.nts.domain.comment.dto.*;
 import com.nts.domain.post.Post;
 import com.nts.domain.post.PostRepository;
 import com.nts.domain.user.User;
@@ -14,6 +11,8 @@ import com.nts.global.encrypt.PasswordEncryption;
 import com.nts.global.exception.AppException;
 import com.nts.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,7 +27,6 @@ public class CommentService {
     private final PostRepository postRepository;
 
     private final PasswordEncryption encryption;
-
 
 
     public CommentCreateResponse createComment(CommentCreateRequest requestDto, Long userId, Long postId) {
@@ -73,4 +71,11 @@ public class CommentService {
         }
     }
 
+    public Page<CommentGetResponse> getPageComment(Long postId, Pageable pageable) {
+        Post foundPost = postRepository.findById(postId)
+                .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_FOUND));
+
+        return commentRepository.findAllByPostOrderByCreatedDateDesc(foundPost, pageable)
+                .map(comment -> CommentGetResponse.from(comment));
+    }
 }

@@ -1,16 +1,16 @@
 package com.nts.controller;
 
-import com.nts.domain.comment.dto.CommentCreateRequest;
-import com.nts.domain.comment.dto.CommentCreateResponse;
-import com.nts.domain.comment.dto.CommentDeleteRequest;
-import com.nts.domain.comment.dto.CommentDeleteResponse;
+import com.nts.domain.comment.dto.*;
 import com.nts.global.Response;
 import com.nts.service.CommentService;
 import com.nts.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import static com.nts.domain.comment.Constants.CommentConstants.COMMENT_PAGE_SIZE;
 import static org.springframework.http.HttpStatus.CREATED;
 
 @RestController
@@ -38,4 +38,14 @@ public class CommentApiController {
 
         return ResponseEntity.ok(Response.success(response));
     }
+
+    @GetMapping("/{postId}/comments")
+    public ResponseEntity<Response<Page<CommentGetResponse>>> getPage(@PathVariable(name = "postId") Long postId, @RequestParam(defaultValue = "0") int pageNumber) {
+
+        Page<CommentGetResponse> response = commentService.getPageComment(postId, PageRequest.of(pageNumber, COMMENT_PAGE_SIZE));
+
+        return ResponseEntity.ok(Response.success(response));
+    }
+
+
 }
