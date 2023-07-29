@@ -20,7 +20,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -53,7 +52,6 @@ class PostServiceTest {
     private Hashtag mockHashtag;
 
 
-
     @Mock
     private PasswordEncryption encryption;
 
@@ -65,12 +63,12 @@ class PostServiceTest {
     String encryptedPassword = "encryptedPassword";
     String title = "title";
     String body = "body";
+    Long userId = 1L;
     Long postId = 1L;
     Long viewCount = 1L;
     String createdDate = "2023/07/28 00:00";
-    List<String> hashtags = List.of("tag","new");
-    List<Hashtag> existingHashtags  = List.of(Hashtag.of("tag1"));
-
+    List<String> hashtags = List.of("tag", "new");
+    List<Hashtag> existingHashtags = List.of(Hashtag.of("tag1"));
 
 
     PostCreateRequest postCreateRequest;
@@ -120,12 +118,8 @@ class PostServiceTest {
         @DisplayName("성공")
         void createPost_success() {
             //given
-            given(userRepository.findUserByName(name))
-                    .willReturn(Optional.of(mockUser));
-            given(encryption.encrypt(password))
-                    .willReturn(encryptedPassword);
-            given(mockUser.validatePassword(encryptedPassword))
-                    .willReturn(true);
+            given(userRepository.getReferenceById(userId))
+                    .willReturn(mockUser);
             given(postRepository.save(any(Post.class)))
                     .willReturn(mockPost);
             given(mockPost.getTitle())
@@ -135,54 +129,16 @@ class PostServiceTest {
 
 
             //when
-            PostCreateResponse response = postService.createPost(postCreateRequest);
+            PostCreateResponse response = postService.createPost(postCreateRequest, userId);
 
             //then
             assertThat(response).isNotNull();
             assertThat(response.getTitle()).isEqualTo(title);
-            verify(userRepository, atLeastOnce()).findUserByName(name);
-            verify(encryption, atLeastOnce()).encrypt(password);
-            verify(mockUser, atLeastOnce()).validatePassword(encryptedPassword);
+            verify(userRepository, atLeastOnce()).getReferenceById(userId);
             verify(postRepository, atLeastOnce()).save(any(Post.class));
             verify(hashtagRepository, atLeastOnce()).findHashtagByNameIn(hashtags);
             verify(hashtagRepository, atLeastOnce()).saveAll(any());
             verify(postHashtagRepository, atLeastOnce()).saveAll(any());
-        }
-
-        @Test
-        @DisplayName("등록되지 않은 사용자가 요청 시 예외가 발생")
-        void createPost_fail_userNotFound() {
-            //given
-            given(userRepository.findUserByName(name))
-                    .willReturn(Optional.empty());
-
-            //when
-            AppException appException = assertThrows(AppException.class, () -> postService.createPost(postCreateRequest));
-
-            //then
-            assertThat(appException.getErrorCode()).isEqualTo(USER_NOT_FOUND);
-            verify(userRepository, atLeastOnce()).findUserByName(name);
-        }
-
-        @Test
-        @DisplayName("요청한 사용자의 비밀번호가 일치하지 않는 경우 예외가 발생")
-        void createPost_fail_invalidPassword() {
-            //given
-            given(userRepository.findUserByName(name))
-                    .willReturn(Optional.of(mockUser));
-            given(encryption.encrypt(password))
-                    .willReturn(encryptedPassword);
-            given(mockUser.validatePassword(encryptedPassword))
-                    .willReturn(false);
-
-            //when
-            AppException appException = assertThrows(AppException.class, () -> postService.createPost(postCreateRequest));
-
-            //then
-            assertThat(appException.getErrorCode()).isEqualTo(INVALID_PASSWORD);
-            verify(userRepository, atLeastOnce()).findUserByName(name);
-            verify(encryption, atLeastOnce()).encrypt(password);
-            verify(mockUser, atLeastOnce()).validatePassword(encryptedPassword);
         }
 
         @Test
@@ -197,21 +153,17 @@ class PostServiceTest {
                     .hashtags(List.of("tag1", "tag2", "tag3", "tag4", "tag5", "tag6"))
                     .build();
 
-            given(userRepository.findUserByName(name))
-                    .willReturn(Optional.of(mockUser));
-            given(encryption.encrypt(password))
-                    .willReturn(encryptedPassword);
-            given(mockUser.validatePassword(encryptedPassword))
-                    .willReturn(true);
+            given(userRepository.getReferenceById(userId))
+                    .willReturn(mockUser);
+            given(postRepository.save(any()))
+                    .willReturn(mockPost);
 
             //when
-            AppException appException = assertThrows(AppException.class, () -> postService.createPost(postCreateRequest));
+            AppException appException = assertThrows(AppException.class, () -> postService.createPost(postCreateRequest, userId));
 
             //then
             assertThat(appException.getErrorCode()).isEqualTo(EXCEED_HASHTAG_SIZE);
-            verify(userRepository, atLeastOnce()).findUserByName(name);
-            verify(encryption, atLeastOnce()).encrypt(password);
-            verify(mockUser, atLeastOnce()).validatePassword(encryptedPassword);
+            verify(userRepository, atLeastOnce()).getReferenceById(userId);
         }
     }
 
@@ -238,7 +190,7 @@ class PostServiceTest {
             given(mockPost.getViewCount())
                     .willReturn(viewCount);
             given(mockPost.getCreatedDate())
-                    .willReturn(LocalDateTime.of(2023,7,28,0,0));
+                    .willReturn(LocalDateTime.of(2023, 7, 28, 0, 0));
 
 
             //when
@@ -249,7 +201,7 @@ class PostServiceTest {
             assertThat(response.getPostId()).isEqualTo(postId);
             assertThat(response.getTitle()).isEqualTo(title);
             assertThat(response.getBody()).isEqualTo(body);
-            assertThat(response.getViewCount()).isEqualTo(viewCount+1);
+            assertThat(response.getViewCount()).isEqualTo(viewCount + 1);
             assertThat(response.getCreatedDate()).isEqualTo(createdDate);
             verify(postRepository, atLeastOnce()).findById(postId);
             verify(postRepository, atLeastOnce()).increaseViewCount(postId);
@@ -298,7 +250,7 @@ class PostServiceTest {
                     .willReturn(existingHashtags);
 
             //when
-            PostUpdateResponse response = postService.updatePost(postUpdateRequest,postId);
+            PostUpdateResponse response = postService.updatePost(postUpdateRequest, postId);
 
             //then
             assertThat(response).isNotNull();
@@ -318,7 +270,7 @@ class PostServiceTest {
                     .willReturn(Optional.empty());
 
             //when
-            AppException appException = assertThrows(AppException.class, () -> postService.updatePost(postUpdateRequest,postId));
+            AppException appException = assertThrows(AppException.class, () -> postService.updatePost(postUpdateRequest, postId));
 
             //then
             assertThat(appException.getErrorCode()).isEqualTo(POST_NOT_FOUND);
@@ -339,7 +291,7 @@ class PostServiceTest {
                     .willReturn(false);
 
             //when
-            AppException appException = assertThrows(AppException.class, () -> postService.updatePost(postUpdateRequest,postId));
+            AppException appException = assertThrows(AppException.class, () -> postService.updatePost(postUpdateRequest, postId));
 
             //then
             assertThat(appException.getErrorCode()).isEqualTo(INVALID_PASSWORD);
@@ -369,7 +321,7 @@ class PostServiceTest {
                     .willReturn(true);
 
             //when
-            AppException appException = assertThrows(AppException.class, () -> postService.updatePost(postUpdateRequest,postId));
+            AppException appException = assertThrows(AppException.class, () -> postService.updatePost(postUpdateRequest, postId));
 
             //then
             assertThat(appException.getErrorCode()).isEqualTo(EXCEED_HASHTAG_SIZE);
@@ -404,7 +356,7 @@ class PostServiceTest {
 
 
             //when
-            PostDeleteResponse response = postService.deletePost(postDeleteRequest,postId);
+            PostDeleteResponse response = postService.deletePost(postDeleteRequest, postId);
 
             //then
             assertThat(response).isNotNull();
@@ -424,7 +376,7 @@ class PostServiceTest {
                     .willReturn(Optional.empty());
 
             //when
-            AppException appException = assertThrows(AppException.class, () -> postService.deletePost(postDeleteRequest,postId));
+            AppException appException = assertThrows(AppException.class, () -> postService.deletePost(postDeleteRequest, postId));
 
             //then
             assertThat(appException.getErrorCode()).isEqualTo(POST_NOT_FOUND);
@@ -445,7 +397,7 @@ class PostServiceTest {
                     .willReturn(false);
 
             //when
-            AppException appException = assertThrows(AppException.class, () -> postService.deletePost(postDeleteRequest,postId));
+            AppException appException = assertThrows(AppException.class, () -> postService.deletePost(postDeleteRequest, postId));
 
             //then
             assertThat(appException.getErrorCode()).isEqualTo(INVALID_PASSWORD);
