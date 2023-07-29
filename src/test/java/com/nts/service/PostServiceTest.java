@@ -1,8 +1,11 @@
 package com.nts.service;
 
+import com.nts.domain.hashtag.Hashtag;
+import com.nts.domain.hashtag.HashtagRepository;
 import com.nts.domain.post.Post;
 import com.nts.domain.post.PostRepository;
 import com.nts.domain.post.dto.*;
+import com.nts.domain.postHashtag.PostHashtagRepository;
 import com.nts.domain.user.User;
 import com.nts.domain.user.UserRepository;
 import com.nts.global.encrypt.PasswordEncryption;
@@ -17,6 +20,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static com.nts.global.exception.ErrorCode.*;
@@ -33,10 +38,21 @@ class PostServiceTest {
     private PostRepository postRepository;
 
     @Mock
+    private HashtagRepository hashtagRepository;
+
+    @Mock
+    private PostHashtagRepository postHashtagRepository;
+
+    @Mock
     private User mockUser;
 
     @Mock
     private Post mockPost;
+
+    @Mock
+    private Hashtag mockHashtag;
+
+
 
     @Mock
     private PasswordEncryption encryption;
@@ -52,6 +68,10 @@ class PostServiceTest {
     Long postId = 1L;
     Long viewCount = 1L;
     String createdDate = "2023/07/28 00:00";
+    List<String> hashtags = List.of("tag","new");
+    List<Hashtag> existingHashtags  = List.of(Hashtag.of("tag1"));
+
+
 
     PostCreateRequest postCreateRequest;
     PostGetResponse postGetResponse;
@@ -68,6 +88,7 @@ class PostServiceTest {
                 .password(password)
                 .title(title)
                 .body(body)
+                .hashtags(hashtags)
                 .build();
 
         postGetResponse = PostGetResponse.builder()
@@ -82,6 +103,7 @@ class PostServiceTest {
                 .password(password)
                 .title(title)
                 .body(body)
+                .hashtags(hashtags)
                 .build();
 
         postDeleteRequest = PostDeleteRequest.builder()
@@ -108,6 +130,9 @@ class PostServiceTest {
                     .willReturn(mockPost);
             given(mockPost.getTitle())
                     .willReturn(title);
+            given(hashtagRepository.findHashtagByNameIn(hashtags))
+                    .willReturn(existingHashtags);
+
 
             //when
             PostCreateResponse response = postService.createPost(postCreateRequest);
@@ -119,6 +144,9 @@ class PostServiceTest {
             verify(encryption, atLeastOnce()).encrypt(password);
             verify(mockUser, atLeastOnce()).validatePassword(encryptedPassword);
             verify(postRepository, atLeastOnce()).save(any(Post.class));
+            verify(hashtagRepository, atLeastOnce()).findHashtagByNameIn(hashtags);
+            verify(hashtagRepository, atLeastOnce()).saveAll(any());
+            verify(postHashtagRepository, atLeastOnce()).saveAll(any());
         }
 
         @Test
@@ -156,6 +184,35 @@ class PostServiceTest {
             verify(encryption, atLeastOnce()).encrypt(password);
             verify(mockUser, atLeastOnce()).validatePassword(encryptedPassword);
         }
+
+        @Test
+        @DisplayName("해시태그 개수가 5개를 초과하는 경우 예외가 발생")
+        void createPost_fail_exceedHashtagsNum() {
+            //given
+            postCreateRequest = PostCreateRequest.builder()
+                    .name(name)
+                    .password(password)
+                    .title(title)
+                    .body(body)
+                    .hashtags(List.of("tag1", "tag2", "tag3", "tag4", "tag5", "tag6"))
+                    .build();
+
+            given(userRepository.findUserByName(name))
+                    .willReturn(Optional.of(mockUser));
+            given(encryption.encrypt(password))
+                    .willReturn(encryptedPassword);
+            given(mockUser.validatePassword(encryptedPassword))
+                    .willReturn(true);
+
+            //when
+            AppException appException = assertThrows(AppException.class, () -> postService.createPost(postCreateRequest));
+
+            //then
+            assertThat(appException.getErrorCode()).isEqualTo(EXCEED_HASHTAG_SIZE);
+            verify(userRepository, atLeastOnce()).findUserByName(name);
+            verify(encryption, atLeastOnce()).encrypt(password);
+            verify(mockUser, atLeastOnce()).validatePassword(encryptedPassword);
+        }
     }
 
     @Nested
@@ -170,6 +227,8 @@ class PostServiceTest {
                     .willReturn(Optional.of(mockPost));
             willDoNothing().given(postRepository)
                     .increaseViewCount(postId);
+            given(postHashtagRepository.getHashtagNamesByPostId(postId))
+                    .willReturn(List.of("tag"));
             given(mockPost.getId())
                     .willReturn(postId);
             given(mockPost.getTitle())
@@ -235,7 +294,8 @@ class PostServiceTest {
                     .willReturn(true);
             willDoNothing().given(mockPost)
                     .update(title, body);
-
+            given(hashtagRepository.findHashtagByNameIn(hashtags))
+                    .willReturn(existingHashtags);
 
             //when
             PostUpdateResponse response = postService.updatePost(postUpdateRequest,postId);
@@ -247,6 +307,7 @@ class PostServiceTest {
             verify(postRepository, atLeastOnce()).findById(postId);
             verify(encryption, atLeastOnce()).encrypt(password);
             verify(mockUser, atLeastOnce()).validatePassword(encryptedPassword);
+            verify(hashtagRepository, atLeastOnce()).findHashtagByNameIn(hashtags);
         }
 
         @Test
@@ -282,6 +343,36 @@ class PostServiceTest {
 
             //then
             assertThat(appException.getErrorCode()).isEqualTo(INVALID_PASSWORD);
+            verify(postRepository, atLeastOnce()).findById(postId);
+            verify(encryption, atLeastOnce()).encrypt(password);
+            verify(mockUser, atLeastOnce()).validatePassword(encryptedPassword);
+        }
+
+        @Test
+        @DisplayName("해시태그 개수가 5개를 초과하는 경우 예외가 발생")
+        void updatePost_fail_exceedHashtagsNum() {
+            //given
+            postUpdateRequest = PostUpdateRequest.builder()
+                    .password(password)
+                    .title(title)
+                    .body(body)
+                    .hashtags(List.of("tag1", "tag2", "tag3", "tag4", "tag5", "tag6"))
+                    .build();
+
+            given(postRepository.findById(postId))
+                    .willReturn(Optional.of(mockPost));
+            given(mockPost.getUser())
+                    .willReturn(mockUser);
+            given(encryption.encrypt(password))
+                    .willReturn(encryptedPassword);
+            given(mockUser.validatePassword(encryptedPassword))
+                    .willReturn(true);
+
+            //when
+            AppException appException = assertThrows(AppException.class, () -> postService.updatePost(postUpdateRequest,postId));
+
+            //then
+            assertThat(appException.getErrorCode()).isEqualTo(EXCEED_HASHTAG_SIZE);
             verify(postRepository, atLeastOnce()).findById(postId);
             verify(encryption, atLeastOnce()).encrypt(password);
             verify(mockUser, atLeastOnce()).validatePassword(encryptedPassword);

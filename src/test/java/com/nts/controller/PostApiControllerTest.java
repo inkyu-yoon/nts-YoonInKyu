@@ -125,7 +125,8 @@ class PostApiControllerTest {
         private static Stream<Arguments> providePostCreateFailScenarios() {
             return Stream.of(
                     Arguments.of(USER_NOT_FOUND, 404, "등록된 사용자가 아닙니다."),
-                    Arguments.of(INVALID_PASSWORD, 401, "비밀번호가 일치하지 않습니다.")
+                    Arguments.of(INVALID_PASSWORD, 401, "비밀번호가 일치하지 않습니다."),
+                    Arguments.of(EXCEED_HASHTAG_SIZE, 400, "해시태그 개수는 5개를 초과할 수 없습니다.")
             );
         }
 
@@ -217,7 +218,8 @@ class PostApiControllerTest {
         private static Stream<Arguments> providePostUpdateFailScenarios() {
             return Stream.of(
                     Arguments.of(POST_NOT_FOUND, 404, "등록된 게시글을 찾을 수 없습니다."),
-                    Arguments.of(INVALID_PASSWORD, 401, "비밀번호가 일치하지 않습니다.")
+                    Arguments.of(INVALID_PASSWORD, 401, "비밀번호가 일치하지 않습니다."),
+                    Arguments.of(EXCEED_HASHTAG_SIZE, 400, "해시태그 개수는 5개를 초과할 수 없습니다.")
             );
         }
 

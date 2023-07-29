@@ -4,6 +4,8 @@ import com.nts.domain.post.Post;
 import com.nts.domain.user.User;
 import lombok.*;
 
+import java.util.List;
+
 @Getter
 @Builder
 @NoArgsConstructor
@@ -14,6 +16,8 @@ public class PostCreateRequest {
     private String password;
     private String title;
     private String body;
+
+    private List<String> hashtags;
 
     public Post toEntity(User user) {
         return Post.builder()

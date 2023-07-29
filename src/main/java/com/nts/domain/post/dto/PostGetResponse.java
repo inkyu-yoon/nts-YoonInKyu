@@ -7,6 +7,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 @Builder
 @Getter
 @NoArgsConstructor
@@ -17,14 +20,25 @@ public class PostGetResponse {
     private String body;
     private Long viewCount;
     private String createdDate;
+    private List<String> hashtagNames;
 
-    public static PostGetResponse from(Post foundPost) {
+    public PostGetResponse(Long postId, String title, String body, Long viewCount, LocalDateTime createdDate, List<String> hashtagNames) {
+        this.postId = postId;
+        this.title = title;
+        this.body = body;
+        this.viewCount = viewCount;
+        this.createdDate = DateUtil.convertLocalDateTimeToString(createdDate);
+        this.hashtagNames = hashtagNames;
+    }
+
+    public static PostGetResponse from(Post foundPost, List<String> hashtagNames) {
         return PostGetResponse.builder()
                 .postId(foundPost.getId())
                 .title(foundPost.getTitle())
                 .body(foundPost.getBody())
-                .viewCount(foundPost.getViewCount()+1)
+                .viewCount(foundPost.getViewCount() + 1)
                 .createdDate(DateUtil.convertLocalDateTimeToString(foundPost.getCreatedDate()))
+                .hashtagNames(hashtagNames)
                 .build();
     }
 }
