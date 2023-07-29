@@ -3,6 +3,7 @@ package com.nts.controller;
 import com.nts.domain.post.dto.*;
 import com.nts.global.Response;
 import com.nts.service.PostService;
+import com.nts.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,11 +16,14 @@ import static org.springframework.http.HttpStatus.CREATED;
 public class PostApiController {
 
     private final PostService postService;
+    private final UserService userService;
 
     @PostMapping
     public ResponseEntity<Response<PostCreateResponse>> create(@RequestBody PostCreateRequest requestDto) {
+        // 게시글 등록 요청한 사용자 검증
+        Long userId = userService.validateUser(requestDto.getName(), requestDto.getPassword());
 
-        PostCreateResponse postResponse = postService.createPost(requestDto);
+        PostCreateResponse postResponse = postService.createPost(requestDto, userId);
 
         return ResponseEntity.status(CREATED).body(Response.success(postResponse));
     }
@@ -41,7 +45,7 @@ public class PostApiController {
     }
 
     @DeleteMapping("/{postId}")
-    public ResponseEntity<Response<PostDeleteResponse>> update(@RequestBody PostDeleteRequest requestDto, @PathVariable(name = "postId") Long postId) {
+    public ResponseEntity<Response<PostDeleteResponse>> delete(@RequestBody PostDeleteRequest requestDto, @PathVariable(name = "postId") Long postId) {
 
         PostDeleteResponse response = postService.deletePost(requestDto, postId);
 
