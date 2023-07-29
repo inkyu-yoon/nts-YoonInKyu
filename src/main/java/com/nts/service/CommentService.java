@@ -4,10 +4,13 @@ import com.nts.domain.comment.Comment;
 import com.nts.domain.comment.CommentRepository;
 import com.nts.domain.comment.dto.CommentCreateRequest;
 import com.nts.domain.comment.dto.CommentCreateResponse;
+import com.nts.domain.comment.dto.CommentDeleteRequest;
+import com.nts.domain.comment.dto.CommentDeleteResponse;
 import com.nts.domain.post.Post;
 import com.nts.domain.post.PostRepository;
 import com.nts.domain.user.User;
 import com.nts.domain.user.UserRepository;
+import com.nts.global.encrypt.PasswordEncryption;
 import com.nts.global.exception.AppException;
 import com.nts.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +27,9 @@ public class CommentService {
 
     private final PostRepository postRepository;
 
+    private final PasswordEncryption encryption;
+
+
 
     public CommentCreateResponse createComment(CommentCreateRequest requestDto, Long userId, Long postId) {
 
@@ -37,5 +43,34 @@ public class CommentService {
         return CommentCreateResponse.from(savedComment);
     }
 
+
+    public CommentDeleteResponse deleteComment(CommentDeleteRequest requestDto, Long postId, Long commentId) {
+
+        postRepository.findById(postId)
+                .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_FOUND));
+
+        Comment foundComment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new AppException(ErrorCode.COMMENT_NOT_FOUND));
+
+        // 삭제 요청자가 댓글 작성자의 비밀번호인지 확인
+        validatePassword(requestDto.getPassword(), foundComment.getUser());
+
+        foundComment.delete();
+
+        return CommentDeleteResponse.from(foundComment);
+
+    }
+
+    /**
+     * 비밀번호가 일치하는지 확인
+     */
+    private void validatePassword(String password, User foundUser) {
+        String encryptedPassword = encryption.encrypt(password);
+
+        // 비밀번호가 일치하는지 확인
+        if (!foundUser.validatePassword(encryptedPassword)) {
+            throw new AppException(ErrorCode.INVALID_PASSWORD);
+        }
+    }
 
 }
