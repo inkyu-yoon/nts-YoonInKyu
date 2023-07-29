@@ -5,6 +5,7 @@ import com.nts.domain.post.dto.*;
 import com.nts.global.exception.AppException;
 import com.nts.global.exception.ErrorCode;
 import com.nts.service.PostService;
+import com.nts.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -39,12 +40,15 @@ class PostApiControllerTest {
     private ObjectMapper objectMapper;
 
     @MockBean
+    private UserService userService;
+    @MockBean
     private PostService postService;
 
     String name = "name";
     String password = "password";
     String title = "title";
     String body = "body";
+    Long userId = 1L;
     Long postId = 1L;
     Long viewCount = 1L;
     String createdDate = "createdDate";
@@ -107,7 +111,9 @@ class PostApiControllerTest {
         @Test
         @DisplayName("성공")
         void createPost_success() throws Exception {
-            given(postService.createPost(postCreateRequest))
+            given(userService.validateUser(name, password))
+                    .willReturn(userId);
+            given(postService.createPost(postCreateRequest,userId))
                     .willReturn(postCreateResponse);
 
             mockMvc.perform(post("/api/v1/posts")
@@ -125,16 +131,15 @@ class PostApiControllerTest {
         private static Stream<Arguments> providePostCreateFailScenarios() {
             return Stream.of(
                     Arguments.of(USER_NOT_FOUND, 404, "등록된 사용자가 아닙니다."),
-                    Arguments.of(INVALID_PASSWORD, 401, "비밀번호가 일치하지 않습니다."),
-                    Arguments.of(EXCEED_HASHTAG_SIZE, 400, "해시태그 개수는 5개를 초과할 수 없습니다.")
+                    Arguments.of(INVALID_PASSWORD, 401, "비밀번호가 일치하지 않습니다.")
             );
         }
 
-        @DisplayName("실패")
+        @DisplayName("사용자 관련 실패 케이스")
         @ParameterizedTest
         @MethodSource("providePostCreateFailScenarios")
         void createPost_fail(ErrorCode errorCode, int responseStatus, String errorMessage) throws Exception {
-            when(postService.createPost(any()))
+            when(userService.validateUser(any(),any()))
                     .thenThrow(new AppException(errorCode));
 
             mockMvc.perform(post("/api/v1/posts")
@@ -147,6 +152,25 @@ class PostApiControllerTest {
                     .andExpect(jsonPath("$.result").exists())
                     .andExpect(jsonPath("$.result").value(errorMessage));
 
+        }
+
+        @Test
+        @DisplayName("해시태그 개수 초과시 실패")
+        void createPost_fail_exceedHashtag() throws Exception {
+            given(userService.validateUser(name, password))
+                    .willReturn(userId);
+            given(postService.createPost(postCreateRequest,userId))
+                    .willThrow(new AppException(EXCEED_HASHTAG_SIZE));
+
+            mockMvc.perform(post("/api/v1/posts")
+                            .contentType(APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(postCreateRequest)))
+                    .andDo(print())
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.message").exists())
+                    .andExpect(jsonPath("$.message").value("ERROR"))
+                    .andExpect(jsonPath("$.result").exists())
+                    .andExpect(jsonPath("$.result").value("해시태그 개수는 5개를 초과할 수 없습니다."));
         }
 
     }

@@ -1,6 +1,7 @@
-package com.nts.domain.post;
+package com.nts.domain.comment;
 
 import com.nts.domain.BaseEntity;
+import com.nts.domain.post.Post;
 import com.nts.domain.user.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -12,36 +13,37 @@ import org.springframework.util.Assert;
 @Getter
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Post extends BaseEntity {
+public class Comment extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "post_id")
+    @Column(name = "comment_id")
     private Long id;
 
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
 
-    private String title;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "post_id")
+    private Post post;
 
     private String body;
 
-    private Long viewCount;
+    private boolean isDeleted;
 
     @Builder
-    public Post(User user, String title, String body) {
+    public Comment(User user, Post post, String body) {
         Assert.notNull(user, "user must not be empty");
-        Assert.hasText(title, "title must not be empty");
+        Assert.notNull(post, "post must not be empty");
         Assert.hasText(body, "body must not be empty");
 
-        this.viewCount = 0L;
         this.user = user;
-        this.title = title;
+        this.post = post;
         this.body = body;
+        this.isDeleted = false;
     }
 
-    public void update(String title, String body) {
-        this.title = title;
-        this.body = body;
+    public void delete() {
+        this.isDeleted = true;
     }
 }

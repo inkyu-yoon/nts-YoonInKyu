@@ -44,4 +44,31 @@ public class UserService {
         }
     }
 
+    /**
+     * 사용자명이 등록된 사용자인지 확인합니다.
+     * 비밀번호가 일치하는지 확인합니다.
+     */
+    public Long validateUser(String name, String password) {
+        // 등록된 사용자인지 확인
+        User foundUser = userRepository.findUserByName(name)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        // 비밀번호 일치하는지 확인
+        validatePassword(password, foundUser);
+
+        return foundUser.getId();
+    }
+
+    /**
+     * 비밀번호가 일치하는지 확인
+     */
+    private void validatePassword(String password, User foundUser) {
+        String encryptedPassword = encryption.encrypt(password);
+
+        // 비밀번호가 일치하는지 확인
+        if (!foundUser.validatePassword(encryptedPassword)) {
+            throw new AppException(ErrorCode.INVALID_PASSWORD);
+        }
+    }
+
 }

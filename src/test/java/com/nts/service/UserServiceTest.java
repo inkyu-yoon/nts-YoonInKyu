@@ -15,7 +15,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static com.nts.global.exception.ErrorCode.DUPLICATE_USERNAME;
+import java.util.Optional;
+
+import static com.nts.global.exception.ErrorCode.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -39,6 +41,7 @@ class UserServiceTest {
     String name = "testName";
     String password = "testPassword";
     String encryptedPassword = "encryptedPassword";
+    Long userId = 1L;
     UserCreateRequest userCreateRequest;
 
     @BeforeEach
@@ -89,6 +92,69 @@ class UserServiceTest {
             //then
             assertThat(appException.getErrorCode()).isEqualTo(DUPLICATE_USERNAME);
             verify(userRepository, atLeastOnce()).existsByName(name);
+        }
+    }
+
+    @Nested
+    @DisplayName("사용자 검증 기능 테스트")
+    class ValidateUser{
+
+        @Test
+        @DisplayName("성공")
+        void validateUser_success(){
+            //given
+            given(userRepository.findUserByName(name))
+                    .willReturn(Optional.of(mockUser));
+            given(encryption.encrypt(password))
+                    .willReturn(encryptedPassword);
+            given(mockUser.validatePassword(encryptedPassword))
+                    .willReturn(true);
+            given(mockUser.getId())
+                    .willReturn(userId);
+
+            //when
+            Long response = userService.validateUser(name,password);
+
+            //then
+            assertThat(response).isNotNull();
+            assertThat(response).isEqualTo(userId);
+            verify(userRepository, atLeastOnce()).findUserByName(name);
+            verify(encryption, atLeastOnce()).encrypt(password);
+            verify(mockUser, atLeastOnce()).validatePassword(encryptedPassword);
+        }
+
+        @Test
+        @DisplayName("등록된 사용자가 없는 경우 예외 발생")
+        void validateUser_fail_notFound(){
+            //given
+            given(userRepository.findUserByName(name))
+                    .willReturn(Optional.empty());
+
+            //when
+            AppException appException = assertThrows(AppException.class, () -> userService.validateUser(name,password));
+
+            //then
+            assertThat(appException.getErrorCode()).isEqualTo(USER_NOT_FOUND);
+            verify(userRepository, atLeastOnce()).findUserByName(name);
+        }
+
+        @Test
+        @DisplayName("비밀번호가 일치하지 않는 경우 예외 발생")
+        void createUser_fail_invalidPassword(){
+            //given
+            given(userRepository.findUserByName(name))
+                    .willReturn(Optional.of(mockUser));
+            given(encryption.encrypt(password))
+                    .willReturn(encryptedPassword);
+            given(mockUser.validatePassword(encryptedPassword))
+                    .willReturn(false);
+
+            //when
+            AppException appException = assertThrows(AppException.class, () -> userService.validateUser(name,password));
+
+            //then
+            assertThat(appException.getErrorCode()).isEqualTo(INVALID_PASSWORD);
+            verify(userRepository, atLeastOnce()).findUserByName(name);
         }
     }
 

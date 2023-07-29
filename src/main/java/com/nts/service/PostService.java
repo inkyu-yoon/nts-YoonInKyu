@@ -35,10 +35,9 @@ public class PostService {
     /**
      * 게시글 작성
      */
-    public PostCreateResponse createPost(PostCreateRequest requestDto) {
+    public PostCreateResponse createPost(PostCreateRequest requestDto, Long userId) {
 
-        // 게시글 작성 요청 사용자 검증
-        User foundUser = findAndValidateUser(requestDto);
+        User foundUser = userRepository.getReferenceById(userId);
 
         //게시글 저장
         Post savedPost = postRepository.save(requestDto.toEntity(foundUser));
@@ -77,23 +76,6 @@ public class PostService {
         postHashtagRepository.saveAll(postHashtags);
     }
 
-
-    /**
-     * 사용자명이 등록된 사용자인지 확인합니다.
-     * 비밀번호가 일치하는지 확인합니다.
-     */
-    private User findAndValidateUser(PostCreateRequest requestDto) {
-
-        // 등록된 사용자인지 확인
-        User foundUser = userRepository.findUserByName(requestDto.getName())
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-
-        // 비밀번호 일치하는지 확인
-        validatePassword(requestDto.getPassword(), foundUser);
-
-        return foundUser;
-    }
-
     /**
      * 해시태그 개수가 5개를 초과하는 경우 예외 처리
      */
@@ -116,7 +98,7 @@ public class PostService {
 
         List<String> hashtagNames = postHashtagRepository.getHashtagNamesByPostId(postId);
 
-        return PostGetResponse.from(foundPost,hashtagNames);
+        return PostGetResponse.from(foundPost, hashtagNames);
     }
 
     /**
