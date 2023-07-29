@@ -29,9 +29,10 @@ public class Post extends BaseEntity {
     private Long viewCount;
     private Long likeCount;
     private Long commentCount;
+    private String hashtags;
 
     @Builder
-    public Post(User user, String title, String body) {
+    public Post(User user, String title, String body, String hashtags) {
         Assert.notNull(user, "user must not be empty");
         Assert.hasText(title, "title must not be empty");
         Assert.hasText(body, "body must not be empty");
@@ -42,10 +43,12 @@ public class Post extends BaseEntity {
         this.user = user;
         this.title = title;
         this.body = body;
+        this.hashtags = hashtags;
     }
 
-    public void update(String title, String body) {
+    public void update(String title, String body,String hashtags) {
         this.title = title;
         this.body = body;
+        this.hashtags = hashtags;
     }
 }

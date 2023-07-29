@@ -5,6 +5,10 @@ import com.nts.global.Response;
 import com.nts.service.PostService;
 import com.nts.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -48,6 +52,14 @@ public class PostApiController {
     public ResponseEntity<Response<PostDeleteResponse>> delete(@RequestBody PostDeleteRequest requestDto, @PathVariable(name = "postId") Long postId) {
 
         PostDeleteResponse response = postService.deletePost(requestDto, postId);
+
+        return ResponseEntity.ok(Response.success(response));
+    }
+
+    @GetMapping
+    public ResponseEntity<Response<Page<PostGetPageResponse>>> getPage(@PageableDefault(size = 20, sort ="createdDate" , direction = Sort.Direction.DESC) Pageable pageable) {
+
+        Page<PostGetPageResponse> response = postService.getPostPage(pageable);
 
         return ResponseEntity.ok(Response.success(response));
     }

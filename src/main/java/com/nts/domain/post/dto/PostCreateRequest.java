@@ -2,6 +2,7 @@ package com.nts.domain.post.dto;
 
 import com.nts.domain.post.Post;
 import com.nts.domain.user.User;
+import com.nts.global.util.StringUtil;
 import lombok.*;
 
 import java.util.List;
@@ -24,6 +25,8 @@ public class PostCreateRequest {
                 .user(user)
                 .title(this.title)
                 .body(this.body)
+                .hashtags(StringUtil.convertListToString(hashtags))
                 .build();
     }
+
 }

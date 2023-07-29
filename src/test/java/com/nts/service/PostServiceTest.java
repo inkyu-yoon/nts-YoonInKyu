@@ -10,6 +10,7 @@ import com.nts.domain.user.User;
 import com.nts.domain.user.UserRepository;
 import com.nts.global.encrypt.PasswordEncryption;
 import com.nts.global.exception.AppException;
+import com.nts.global.util.StringUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -70,6 +71,7 @@ class PostServiceTest {
     List<String> hashtags = List.of("tag", "new");
     List<Hashtag> existingHashtags = List.of(Hashtag.of("tag1"));
 
+    String hashtagNames = StringUtil.convertListToString(hashtags);
 
     PostCreateRequest postCreateRequest;
     PostGetResponse postGetResponse;
@@ -155,8 +157,6 @@ class PostServiceTest {
 
             given(userRepository.getReferenceById(userId))
                     .willReturn(mockUser);
-            given(postRepository.save(any()))
-                    .willReturn(mockPost);
 
             //when
             AppException appException = assertThrows(AppException.class, () -> postService.createPost(postCreateRequest, userId));
@@ -245,7 +245,7 @@ class PostServiceTest {
             given(mockUser.validatePassword(encryptedPassword))
                     .willReturn(true);
             willDoNothing().given(mockPost)
-                    .update(title, body);
+                    .update(title, body, hashtagNames);
             given(hashtagRepository.findHashtagByNameIn(hashtags))
                     .willReturn(existingHashtags);
 

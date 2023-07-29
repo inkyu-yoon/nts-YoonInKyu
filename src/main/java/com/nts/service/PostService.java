@@ -12,7 +12,10 @@ import com.nts.domain.user.UserRepository;
 import com.nts.global.encrypt.PasswordEncryption;
 import com.nts.global.exception.AppException;
 import com.nts.global.exception.ErrorCode;
+import com.nts.global.util.StringUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,13 +42,13 @@ public class PostService {
 
         User foundUser = userRepository.getReferenceById(userId);
 
-        //게시글 저장
-        Post savedPost = postRepository.save(requestDto.toEntity(foundUser));
-
         List<String> hashtags = requestDto.getHashtags();
 
         // 해시태그의 수는 최대 5개
         validateHashtagsSize(hashtags);
+
+        //게시글 저장
+        Post savedPost = postRepository.save(requestDto.toEntity(foundUser));
 
         saveNewHashtagsAndLinkToPost(savedPost, hashtags);
 
@@ -111,12 +114,12 @@ public class PostService {
         // 수정 요청자가 게시글 작성자의 비밀번호인지 확인
         validatePassword(requestDto.getPassword(), foundPost.getUser());
 
-        foundPost.update(requestDto.getTitle(), requestDto.getBody());
-
         List<String> hashtags = requestDto.getHashtags();
 
         // 해시태그의 수는 최대 5개
         validateHashtagsSize(hashtags);
+
+        foundPost.update(requestDto.getTitle(), requestDto.getBody(), StringUtil.convertListToString(hashtags));
 
         // 게시글 수정 시, 해시태그도 변경이 있을 수 있으므로 재등록하기위해 초기화
         postHashtagRepository.deleteAllByPost(foundPost);
@@ -154,4 +157,8 @@ public class PostService {
     }
 
 
+    public Page<PostGetPageResponse> getPostPage(Pageable pageable) {
+        return postRepository.findAll(pageable)
+                .map(post -> PostGetPageResponse.from(post));
+    }
 }
