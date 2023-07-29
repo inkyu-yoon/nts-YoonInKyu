@@ -3,6 +3,8 @@ package com.nts.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nts.domain.comment.dto.CommentCreateRequest;
 import com.nts.domain.comment.dto.CommentCreateResponse;
+import com.nts.domain.comment.dto.CommentDeleteRequest;
+import com.nts.domain.comment.dto.CommentDeleteResponse;
 import com.nts.global.exception.AppException;
 import com.nts.global.exception.ErrorCode;
 import com.nts.service.CommentService;
@@ -23,9 +25,11 @@ import java.util.stream.Stream;
 
 import static com.nts.global.exception.ErrorCode.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -52,6 +56,8 @@ class CommentApiControllerTest {
     Long commentId = 1L;
     CommentCreateRequest commentCreateRequest;
     CommentCreateResponse commentCreateResponse;
+    CommentDeleteRequest commentDeleteRequest;
+    CommentDeleteResponse commentDeleteResponse;
 
     @BeforeEach
     void setUp() {
@@ -62,6 +68,15 @@ class CommentApiControllerTest {
                 .build();
 
         commentCreateResponse = CommentCreateResponse.builder()
+                .commentId(commentId)
+                .body(body)
+                .build();
+
+        commentDeleteRequest = CommentDeleteRequest.builder()
+                .password(password)
+                .build();
+
+        commentDeleteResponse = CommentDeleteResponse.builder()
                 .commentId(commentId)
                 .body(body)
                 .build();
@@ -103,7 +118,7 @@ class CommentApiControllerTest {
         @ParameterizedTest
         @MethodSource("provideCommentCreateFailScenarios")
         void createComment_fail(ErrorCode errorCode, int responseStatus, String errorMessage) throws Exception {
-            when(userService.validateUser(any(),any()))
+            when(userService.validateUser(any(), any()))
                     .thenThrow(new AppException(errorCode));
 
             mockMvc.perform(post("/api/v1/posts/" + postId + "/comments")
@@ -137,7 +152,56 @@ class CommentApiControllerTest {
                     .andExpect(jsonPath("$.result").exists())
                     .andExpect(jsonPath("$.result").value("등록된 게시글을 찾을 수 없습니다."));
         }
+    }
 
+    @Nested
+    @DisplayName("댓글 삭제 테스트")
+    class DeleteComment {
 
+        @Test
+        @DisplayName("성공")
+        void deleteComment_success() throws Exception {
+            given(commentService.deleteComment(commentDeleteRequest, postId, commentId))
+                    .willReturn(commentDeleteResponse);
+
+            mockMvc.perform(delete("/api/v1/posts/" + postId + "/comments/" + commentId)
+                            .contentType(APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(commentDeleteRequest)))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.message").exists())
+                    .andExpect(jsonPath("$.message").value("SUCCESS"))
+                    .andExpect(jsonPath("$.result").exists())
+                    .andExpect(jsonPath("$.result.commentId").value(commentId))
+                    .andExpect(jsonPath("$.result.body").value(body));
+        }
+
+        private static Stream<Arguments> provideCommentDeleteFailScenarios() {
+            return Stream.of(
+                    Arguments.of(POST_NOT_FOUND, 404, "등록된 게시글을 찾을 수 없습니다."),
+                    Arguments.of(COMMENT_NOT_FOUND, 404, "등록된 댓글을 찾을 수 없습니다."),
+                    Arguments.of(INVALID_PASSWORD, 401, "비밀번호가 일치하지 않습니다.")
+
+            );
+        }
+
+        @DisplayName("실패 케이스")
+        @ParameterizedTest
+        @MethodSource("provideCommentDeleteFailScenarios")
+        void deleteComment_fail(ErrorCode errorCode, int responseStatus, String errorMessage) throws Exception {
+            when(commentService.deleteComment(any(), anyLong(), anyLong()))
+                    .thenThrow(new AppException(errorCode));
+
+            mockMvc.perform(delete("/api/v1/posts/" + postId + "/comments/" + commentId)
+                            .contentType(APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(commentDeleteRequest)))
+                    .andDo(print())
+                    .andExpect(status().is(responseStatus))
+                    .andExpect(jsonPath("$.message").exists())
+                    .andExpect(jsonPath("$.message").value("ERROR"))
+                    .andExpect(jsonPath("$.result").exists())
+                    .andExpect(jsonPath("$.result").value(errorMessage));
+
+        }
     }
 }
