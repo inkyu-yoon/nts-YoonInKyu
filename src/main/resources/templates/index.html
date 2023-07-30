@@ -29,6 +29,10 @@
 
     <button type="button" class="btn btn-primary" onclick="changePageSize(20)">20개씩 보기</button>
 
+    <button type="button" class="btn btn-info" onclick="openPostModal()">게시글 등록</button>
+    <th:block th:replace="~{postModal :: postModalFragment}"></th:block>
+
+
     <th:block th:replace="~{searchBox :: searchBoxFragment}"></th:block>
 
     <table class="table table-hover">
