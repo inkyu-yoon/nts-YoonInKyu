@@ -63,4 +63,12 @@ public class PostApiController {
 
         return ResponseEntity.ok(Response.success(response));
     }
+
+    @GetMapping("/count")
+    public ResponseEntity<Response<PostDataGetResponse>> getTotal() {
+
+        PostDataGetResponse response = postService.getTotalPostAndCommentCount();
+
+        return ResponseEntity.ok(Response.success(response));
+    }
 }

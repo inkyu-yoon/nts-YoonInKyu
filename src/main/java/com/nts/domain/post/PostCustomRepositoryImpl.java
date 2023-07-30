@@ -1,6 +1,8 @@
 package com.nts.domain.post;
 
+import com.nts.domain.post.dto.PostDataGetResponse;
 import com.nts.domain.post.dto.PostGetPageResponse;
+import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -74,4 +76,17 @@ public class PostCustomRepositoryImpl implements PostCustomRepository {
         }
     }
 
+    @Override
+    public PostDataGetResponse getPostAndCommentTotalCount() {
+
+        Tuple result = jpaQueryFactory
+                .select(post.count(), post.commentCount.sum())
+                .from(post)
+                .fetchOne();
+
+        Long totalPostCount = result.get(post.count());
+        Long totalCommentCount = result.get(post.commentCount.sum());
+
+        return new PostDataGetResponse(totalPostCount, totalCommentCount);
+    }
 }

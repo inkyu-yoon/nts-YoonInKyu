@@ -165,4 +165,8 @@ public class PostService {
     public Page<PostGetPageResponse> getPostsBySearch(String searchCondition, String keyword, Pageable pageable) {
         return postRepository.getPostsBySearch(searchCondition, keyword, pageable);
     }
+
+    public PostDataGetResponse getTotalPostAndCommentCount() {
+        return postRepository.getPostAndCommentTotalCount();
+    }
 }
