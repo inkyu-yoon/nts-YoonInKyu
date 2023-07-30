@@ -241,3 +241,82 @@ function closeAndClearLikeModal() {
     document.getElementById('likeUserPassword').value = '';
 
 }
+
+
+
+function openCommentModal() {
+    const commentModal = document.getElementById('commentModal');
+    commentModal.style.display = 'block';
+}
+
+
+function registerComment() {
+    const username = document.getElementById('commentUsername').value;
+    const password = document.getElementById('commentUserPassword').value;
+    const commentBody = document.getElementById('commentBody').value;
+    const postId = document.getElementById('postId').value;
+
+    const commentData = {
+        name: username,
+        password: password,
+        body: commentBody
+    };
+
+    // POST 요청 보내기
+    axios.post('/api/v1/posts/'+postId+'/comments', commentData)
+        .then(function (response) {
+            // 등록 성공 시, 모달 닫고 게시글 목록 갱신
+            closeAndClearCommentModal();
+            location.reload();
+        })
+        .catch(function (error) {
+            console.log(error);
+            alert(error.response.data.result);
+        });
+}
+
+// 게시글 등록 모달 닫기 및 입력값 초기화 함수
+function closeAndClearCommentModal() {
+    const commentModal = document.getElementById('commentModal');
+    commentModal.style.display = 'none';
+
+    document.getElementById('commentBody').value = '';
+
+}
+
+
+
+function openDeleteCommentModal() {
+    const deleteCommentModal = document.getElementById('deleteCommentModal');
+    deleteCommentModal.style.display = 'block';
+}
+
+function deleteComment() {
+    const password = document.getElementById('deleteCommentUserPassword').value;
+    const postId = document.getElementById('deletePostId').value;
+    const commentId = document.getElementById('deleteCommentId').value;
+    const deleteCommentData = {
+        password: password
+    };
+
+    axios.delete(`/api/v1/posts/${postId}/comments/${commentId}`, { data: deleteCommentData })
+        .then(response => {
+            closeAndClearDeleteCommentModal();
+            location.reload();
+        })
+        .catch(error => {
+            // 댓글 삭제가 실패한 경우, 에러를 콘솔에 출력하고 사용자에게 알림 창을 띄웁니다.
+            console.error("댓글 삭제 오류:", error);
+            alert(error.response.data.result);
+        });
+}
+
+
+// 게시글 등록 모달 닫기 및 입력값 초기화 함수
+function closeAndClearDeleteCommentModal() {
+    const deleteCommentModal = document.getElementById('deleteCommentModal');
+    deleteCommentModal.style.display = 'none';
+
+    document.getElementById('deleteCommentUserPassword').value = '';
+
+}
