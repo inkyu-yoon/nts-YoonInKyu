@@ -1,0 +1,21 @@
+<th:block th:fragment="likeModalFragment" xmlns:th="http://www.w3.org/1999/html">
+    <div class="modal" id="likeModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <label for="likeUsername">사용자 이름:</label>
+                    <input type="text" id="likeUsername" name="username" class="form-control">
+                    <input type="text" id="likePostId" th:value = "${post.postId}" style="display: none">
+                    <label for="likeUserPassword">비밀번호:</label>
+                    <input type="password" id="likeUserPassword" name="password" class="form-control">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="like()">등록</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="closeAndClearLikeModal()">
+                        닫기
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</th:block>

@@ -200,3 +200,44 @@ function closeAndClearDeletePostModal() {
     document.getElementById('deletePostUserPassword').value = '';
 
 }
+
+
+
+function openLikeModal() {
+    const likeModal = document.getElementById('likeModal');
+    likeModal.style.display = 'block';
+}
+
+function like() {
+    const username = document.getElementById('likeUsername').value;
+    const password = document.getElementById('likeUserPassword').value;
+    const postId = document.getElementById('likePostId').value;
+
+
+    const likeData = {
+        name: username,
+        password: password,
+    };
+
+    // POST 요청 보내기
+    axios.post('/api/v1/posts/'+postId+'/likes', likeData)
+        .then(function (response) {
+            // 등록 성공 시, 모달 닫고 게시글 목록 갱신
+            location.reload();
+        })
+        .catch(function (error) {
+            console.log(error);
+            alert(error.response.data.result);
+        });
+}
+
+
+// 게시글 등록 모달 닫기 및 입력값 초기화 함수
+function closeAndClearLikeModal() {
+    const likeModal = document.getElementById('likeModal');
+    likeModal.style.display = 'none';
+
+    document.getElementById('likeUsername').value = '';
+    document.getElementById('likeUserPassword').value = '';
+
+}
