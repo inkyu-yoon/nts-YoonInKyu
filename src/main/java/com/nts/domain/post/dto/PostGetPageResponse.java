@@ -22,6 +22,18 @@ public class PostGetPageResponse {
     private String hashtagNames;
     private boolean isNew;
 
+    public PostGetPageResponse(Post post) {
+        this.postId = post.getId();
+        this.title = post.getTitle();
+        this.author = post.getUser().getName();
+        this.viewCount = post.getViewCount();
+        this.commentCount = post.getCommentCount();
+        this.likeCount = post.getLikeCount();
+        this.createdDate = DateUtil.convertLocalDateTimeToString(post.getCreatedDate());
+        this.hashtagNames = post.getHashtags();
+        this.isNew = DateUtil.checkRecentDate(post.getCreatedDate());
+    }
+
     public static PostGetPageResponse from(Post foundPost) {
         return PostGetPageResponse.builder()
                 .postId(foundPost.getId())
@@ -36,7 +48,4 @@ public class PostGetPageResponse {
                 .build();
     }
 
-    public boolean getIsNew() {
-        return isNew;
-    }
 }

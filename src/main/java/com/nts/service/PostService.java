@@ -161,4 +161,8 @@ public class PostService {
         return postRepository.findAll(pageable)
                 .map(post -> PostGetPageResponse.from(post));
     }
+
+    public Page<PostGetPageResponse> getPostsBySearch(String searchCondition, String keyword, Pageable pageable) {
+        return postRepository.getPostsBySearch(searchCondition, keyword, pageable);
+    }
 }
