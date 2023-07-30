@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>지원자 윤인규 게시판</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-qKXV1j0HvMUeCBQ+QVp7JcfGl760yU08IQ+GpUo5hlbpg51QRiuqHAJz8+BrxE/N"
+            crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootswatch@4.5.2/dist/lux/bootstrap.min.css"
+          integrity="sha384-9+PGKSqjRdkeAU7Eu4nkJU8RFaH8ace8HGXnkiKMP9I9Te0GJ4/km3L1Z8tXigpG" crossorigin="anonymous">
+</head>
+<body>
+
+<!--NavBar 구현-->
+<th:block th:replace="~{navbar :: navbarFragment}"></th:block>
+
+
+<div class="container" style="text-align: center; margin-top: 50px;">
+    <h4>전체 게시글 수: <span th:text="${postsData.postCount}"></span></h4>
+    <h4>전체 댓글 수: <span th:text="${postsData.totalCommentCount}"></span></h4>
+</div>
+
+
+<div class="container">
+    <h1 class="mt-4 mb-3">게시글 목록</h1>
+
+    <button type="button" class="btn btn-primary" onclick="changePageSize(10)">10개씩 보기</button>
+
+    <button type="button" class="btn btn-primary" onclick="changePageSize(20)">20개씩 보기</button>
+
+    <button type="button" class="btn btn-info" onclick="openPostModal()">게시글 등록</button>
+    <th:block th:replace="~{modal/postModal :: postModalFragment}"></th:block>
+
+
+    <th:block th:replace="~{searchBox :: searchBoxFragment}"></th:block>
+
+    <table class="table table-hover">
+        <thead>
+        <tr class="table-active">
+            <th>제목</th>
+            <th>작성자</th>
+            <th>조회수</th>
+            <th>댓글 수</th>
+            <th>좋아요 수</th>
+            <th>작성일</th>
+            <th>해시태그</th>
+        </tr>
+        </thead>
+        <tbody>
+
+        <tr th:each="post : ${posts}">
+            <td>
+                <span th:if="${post.isNew}" class="badge bg-success">NEW</span>
+                <a th:href="@{/posts/{postId}(postId=${post.postId})}" style="text-decoration: none">
+                    <span th:text="${post.title}"></span>
+                </a>
+            </td>
+            <td th:text="${post.author}"></td>
+            <td th:text="${post.viewCount}"></td>
+            <td th:text="${post.commentCount}"></td>
+            <td th:text="${post.likeCount}"></td>
+            <td th:text="${post.createdDate}"></td>
+            <td th:text="${post.hashtagNames}"></td>
+        </tr>
+        </tbody>
+    </table>
+
+    <th:block th:replace="~{pagination :: paginationFragment}"></th:block>
+
+
+
+</div>
+
+
+<script src="../main.js"></script>
+
+</body>
+</html>

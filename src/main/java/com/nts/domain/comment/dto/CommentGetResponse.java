@@ -18,6 +18,7 @@ public class CommentGetResponse {
     private String body;
     private String createdDate;
     private String author;
+    private boolean isDeleted;
 
     public static CommentGetResponse from(Comment comment) {
 
@@ -28,6 +29,7 @@ public class CommentGetResponse {
                 .body(body)
                 .createdDate(DateUtil.convertLocalDateTimeToString(comment.getCreatedDate()))
                 .author(comment.getUser().getName())
+                .isDeleted(comment.isDeleted())
                 .build();
     }
 }

@@ -1,0 +1,28 @@
+deletePostModal.html<th:block th:fragment="commentModalFragment" xmlns:th="http://www.w3.org/1999/html">
+
+    <div class="modal" id="commentModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">댓글 등록</h5>
+                </div>
+                <div class="modal-body">
+                    <label for="commentUsername">사용자 이름:</label>
+                    <input type="text" id="commentUsername" name="username" class="form-control">
+                    <input type="text" id="postId" th:value = "${post.postId}" style="display: none">
+                    <label for="commentUserPassword">비밀번호:</label>
+                    <input type="password" id="commentUserPassword" name="password" class="form-control">
+                    <label for="commentBody">댓글 내용:</label>
+                    <textarea id="commentBody" name="postBody" class="form-control"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="registerComment()">등록</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="closeAndClearCommentModal()">
+                        닫기
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</th:block>

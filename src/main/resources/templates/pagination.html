@@ -1,0 +1,63 @@
+<th:block th:fragment="paginationFragment" xmlns:th="http://www.w3.org/1999/html">
+    <div style="text-align: center;">
+        <ul class="pagination pagination-sm" style="display: flex; justify-content: center; list-style: none; padding: 0;">
+
+                <th:block th:if="${searchCondition != 'none'}">
+                    <li class="page-item">
+                        <a class="page-link"
+                           th:href="@{/(searchCondition=${searchCondition},keyword=${keyword},page=${previous},size=${pageSize})}">&laquo;</a>
+                    </li>
+
+                    <th:block th:if="${numberOfPages !=0}">
+                        <th:block th:with="end=${numberOfPages}">
+                            <li class="page-item active" th:each="num : ${#numbers.sequence(1,end)}">
+                                <a class="page-link"
+                                   th:href="@{/(searchCondition=${searchCondition},keyword=${keyword},page=${num-1},size=${pageSize})}"
+                                   th:text="|${num}|"></a>
+                            </li>
+                        </th:block>
+                    </th:block>
+
+                    <th:block th:if="${numberOfPages ==0}">
+                        <li class="page-item active">
+                            <a class="page-link"
+                               th:href="@{/(searchCondition=${searchCondition},keyword=${keyword},page=0,size=${pageSize})}"
+                               th:text="1"></a>
+                        </li>
+                    </th:block>
+
+                    <li class="page-item">
+                        <a class="page-link"
+                           th:href="@{/(searchCondition=${searchCondition},keyword=${keyword},page=${next},size=${pageSize})}">&raquo;</a>
+                    </li>
+                </th:block>
+
+
+                <th:block th:if="${searchCondition == 'none'}">
+
+                    <li class="page-item">
+                        <a class="page-link" th:href="@{/(page=${previous},size=${pageSize})}">&laquo;</a>
+                    </li>
+                    <th:block th:if="${numberOfPages !=0}">
+                        <th:block th:with="end=${numberOfPages}">
+                            <li class="page-item active" th:each="num : ${#numbers.sequence(1,end)}">
+                                <a class="page-link" th:href="@{/(page=${num-1},size=${pageSize})}"
+                                   th:text="|${num}|"></a>
+                            </li>
+                        </th:block>
+                    </th:block>
+
+                    <th:block th:if="${numberOfPages ==0}">
+                        <li class="page-item active">
+                            <a class="page-link" th:href="@{/(page=0,size=${pageSize})}" th:text="1"></a>
+                        </li>
+                    </th:block>
+
+                    <li class="page-item">
+                        <a class="page-link" th:href="@{/(page=${next},size=${pageSize})}">&raquo;</a>
+                    </li>
+
+                </th:block>
+            </ul>
+    </div>
+</th:block>
