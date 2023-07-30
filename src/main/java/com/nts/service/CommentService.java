@@ -28,7 +28,9 @@ public class CommentService {
 
     private final PasswordEncryption encryption;
 
-
+    /**
+     * 댓글 작성
+     */
     public CommentCreateResponse createComment(CommentCreateRequest requestDto, Long userId, Long postId) {
 
         User foundUser = userRepository.getReferenceById(userId);
@@ -43,7 +45,9 @@ public class CommentService {
         return CommentCreateResponse.from(savedComment);
     }
 
-
+    /**
+     * 댓글 삭제
+     */
     public CommentDeleteResponse deleteComment(CommentDeleteRequest requestDto, Long postId, Long commentId) {
 
         postRepository.findById(postId)
@@ -73,6 +77,9 @@ public class CommentService {
         }
     }
 
+    /**
+     * postId에 해당하는 게시글의 댓글을 날짜 최신순으로 조회
+     */
     public Page<CommentGetResponse> getPageComment(Long postId, Pageable pageable) {
         Post foundPost = postRepository.findById(postId)
                 .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_FOUND));

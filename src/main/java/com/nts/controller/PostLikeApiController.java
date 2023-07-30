@@ -17,6 +17,10 @@ public class PostLikeApiController {
     private final UserService userService;
     private final PostLikeService postLikeService;
 
+    /**
+     * 게시글에 좋아요를 입력하거나 취소하는 API
+     * 전달 받은 사용자명과 비밀번호로 사용자 검증 후 로직 진행
+     */
     @PostMapping("/{postId}/likes")
     public ResponseEntity<Response<LikeOrUnlikeResponse>> likeOrUnlike(@PathVariable(name = "postId") Long postId, @RequestBody LikeOrUnlikeRequest requestDto) {
         Long userId = userService.validateUser(requestDto.getName(), requestDto.getPassword());

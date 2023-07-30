@@ -19,6 +19,9 @@ import static org.springframework.http.HttpStatus.*;
 public class UserApiController {
     private final UserService userService;
 
+    /**
+     * 사용자 등록 API
+     */
     @PostMapping
     public ResponseEntity<Response<UserCreateResponse>> create(@RequestBody UserCreateRequest requestDto) {
 

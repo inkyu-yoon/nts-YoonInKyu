@@ -22,6 +22,9 @@ public class PostCustomRepositoryImpl implements PostCustomRepository {
 
     private final JPAQueryFactory jpaQueryFactory;
 
+    /**
+     * 전달받은 검색 기준과 키워드로 게시글 조회
+     */
     @Override
     public Page<PostGetPageResponse> getPostsBySearch(String searchCondition, String keyword, Pageable pageable) {
         List<PostGetPageResponse> posts = jpaQueryFactory.from(post)
@@ -75,6 +78,10 @@ public class PostCustomRepositoryImpl implements PostCustomRepository {
             return null;
         }
     }
+
+    /**
+     * 게시글 전체 개수와, 각 게시글이 갖는 commentCount의 합을 조회
+     */
 
     @Override
     public PostDataGetResponse getPostAndCommentTotalCount() {

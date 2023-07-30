@@ -157,15 +157,24 @@ public class PostService {
     }
 
 
+    /**
+     * 게시글을 페이지 단위로 조회
+     */
     public Page<PostGetPageResponse> getPostPage(Pageable pageable) {
         return postRepository.findAll(pageable)
                 .map(post -> PostGetPageResponse.from(post));
     }
 
+    /**
+     * 검색 조건에 따른 게시글 페이지 단위 조회
+     */
     public Page<PostGetPageResponse> getPostsBySearch(String searchCondition, String keyword, Pageable pageable) {
         return postRepository.getPostsBySearch(searchCondition, keyword, pageable);
     }
 
+    /**
+     * 게시글 전체 개수와 댓글 전체 개수 조회
+     */
     public PostDataGetResponse getTotalPostAndCommentCount() {
         return postRepository.getPostAndCommentTotalCount();
     }

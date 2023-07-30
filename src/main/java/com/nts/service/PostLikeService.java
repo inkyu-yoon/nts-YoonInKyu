@@ -25,6 +25,9 @@ public class PostLikeService {
     private final PostLikeRepository postLikeRepository;
 
 
+    /**
+     * 좋아요 or 좋아요 취소
+     */
     public LikeOrUnlikeResponse likeOrUnlikePost(Long userId, Long postId) {
 
         User foundUser = userRepository.getReferenceById(userId);
