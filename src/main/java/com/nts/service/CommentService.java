@@ -28,26 +28,30 @@ public class CommentService {
 
     private final PasswordEncryption encryption;
 
-
+    /**
+     * 댓글 작성
+     */
     public CommentCreateResponse createComment(CommentCreateRequest requestDto, Long userId, Long postId) {
 
         User foundUser = userRepository.getReferenceById(userId);
 
-        Post foundPost = postRepository.findById(postId)
-                .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_FOUND));
+        Post foundPost = validatePostById(postId);
 
         Comment savedComment = commentRepository.save(requestDto.toEntity(foundUser, foundPost));
 
+        // 게시글의 comment_Count 증가
         postRepository.increaseCommentCount(postId);
 
         return CommentCreateResponse.from(savedComment);
     }
 
 
+    /**
+     * 댓글 삭제
+     */
     public CommentDeleteResponse deleteComment(CommentDeleteRequest requestDto, Long postId, Long commentId) {
 
-        postRepository.findById(postId)
-                .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_FOUND));
+        validatePostById(postId);
 
         Comment foundComment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new AppException(ErrorCode.COMMENT_NOT_FOUND));
@@ -73,11 +77,23 @@ public class CommentService {
         }
     }
 
+    /**
+     * postId에 해당하는 게시글의 댓글을 날짜 최신순으로 조회
+     */
+    @Transactional(readOnly = true)
     public Page<CommentGetResponse> getPageComment(Long postId, Pageable pageable) {
-        Post foundPost = postRepository.findById(postId)
-                .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_FOUND));
+        Post foundPost = validatePostById(postId);
 
         return commentRepository.findAllByPostOrderByCreatedDateDesc(foundPost, pageable)
                 .map(comment -> CommentGetResponse.from(comment));
+    }
+
+    /**
+     * 게시글 유효성 검증
+     */
+    private Post validatePostById(Long postId) {
+        Post foundPost = postRepository.findById(postId)
+                .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_FOUND));
+        return foundPost;
     }
 }

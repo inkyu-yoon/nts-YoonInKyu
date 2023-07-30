@@ -181,6 +181,8 @@ class PostServiceTest {
                     .increaseViewCount(postId);
             given(postHashtagRepository.getHashtagNamesByPostId(postId))
                     .willReturn(List.of("tag"));
+            given(mockPost.getUser())
+                    .willReturn(mockUser);
             given(mockPost.getId())
                     .willReturn(postId);
             given(mockPost.getTitle())
