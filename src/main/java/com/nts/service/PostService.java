@@ -50,6 +50,7 @@ public class PostService {
         //게시글 저장
         Post savedPost = postRepository.save(requestDto.toEntity(foundUser));
 
+        // 게시글과 해쉬테그 관계 테이블에 저장
         saveNewHashtagsAndLinkToPost(savedPost, hashtags);
 
         return PostCreateResponse.from(savedPost);
@@ -93,8 +94,7 @@ public class PostService {
      * 단건 조회 요청 시 조회수 증가
      */
     public PostGetResponse getPost(Long postId) {
-        Post foundPost = postRepository.findById(postId)
-                .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_FOUND));
+        Post foundPost = validatePostById(postId);
 
         // @Modifying 이용해서 동시성 처리
         postRepository.increaseViewCount(postId);
@@ -104,12 +104,12 @@ public class PostService {
         return PostGetResponse.from(foundPost, hashtagNames);
     }
 
+
     /**
      * 게시글 수정
      */
     public PostUpdateResponse updatePost(PostUpdateRequest requestDto, Long postId) {
-        Post foundPost = postRepository.findById(postId)
-                .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_FOUND));
+        Post foundPost = validatePostById(postId);
 
         // 수정 요청자가 게시글 작성자의 비밀번호인지 확인
         validatePassword(requestDto.getPassword(), foundPost.getUser());
@@ -133,8 +133,7 @@ public class PostService {
      * 게시글 삭제
      */
     public PostDeleteResponse deletePost(PostDeleteRequest requestDto, Long postId) {
-        Post foundPost = postRepository.findById(postId)
-                .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_FOUND));
+        Post foundPost = validatePostById(postId);
 
         // 삭제 요청자가 게시글 작성자의 비밀번호인지 확인
         validatePassword(requestDto.getPassword(), foundPost.getUser());
@@ -156,10 +155,20 @@ public class PostService {
         }
     }
 
+    /**
+     * 게시글 유효성 검증
+     */
+    private Post validatePostById(Long postId) {
+        Post foundPost = postRepository.findById(postId)
+                .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_FOUND));
+        return foundPost;
+    }
+
 
     /**
      * 게시글을 페이지 단위로 조회
      */
+    @Transactional(readOnly = true)
     public Page<PostGetPageResponse> getPostPage(Pageable pageable) {
         return postRepository.findAll(pageable)
                 .map(post -> PostGetPageResponse.from(post));
@@ -168,6 +177,7 @@ public class PostService {
     /**
      * 검색 조건에 따른 게시글 페이지 단위 조회
      */
+    @Transactional(readOnly = true)
     public Page<PostGetPageResponse> getPostsBySearch(String searchCondition, String keyword, Pageable pageable) {
         return postRepository.getPostsBySearch(searchCondition, keyword, pageable);
     }
@@ -175,6 +185,7 @@ public class PostService {
     /**
      * 게시글 전체 개수와 댓글 전체 개수 조회
      */
+    @Transactional(readOnly = true)
     public PostDataGetResponse getTotalPostAndCommentCount() {
         return postRepository.getPostAndCommentTotalCount();
     }
