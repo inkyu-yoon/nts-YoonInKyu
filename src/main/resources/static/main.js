@@ -116,3 +116,87 @@ function addHashtagInput() {
     hashtagsDiv.appendChild(newInput);
     hashtagCount++;
 }
+
+
+
+function openUpdatePostModal() {
+    const updatePostModal = document.getElementById('updatePostModal');
+    updatePostModal.style.display = 'block';
+}
+
+
+function updatePost() {
+    const password = document.getElementById('updatePostUserPassword').value;
+    const postTitle = document.getElementById('updatePostTitle').value;
+    const postBody = document.getElementById('updatePostBody').value;
+    const postId = document.getElementById('updatePostId').value;
+
+    const hashtags = [];
+
+    // 입력된 해시태그들을 수집
+    const hashtagInputs = document.querySelectorAll('#hashtags input');
+    hashtagInputs.forEach(input => {
+        if (input.value.trim() !== '') {
+            hashtags.push(input.value.trim());
+        }
+    });
+
+    const postData = {
+        password: password,
+        title: postTitle,
+        body: postBody,
+        hashtags: hashtags.slice(0, 5) // 최대 5개만 추출
+    };
+
+    // POST 요청 보내기
+    axios.put('/api/v1/posts/'+postId, postData)
+        .then(function (response) {
+            location.reload();
+        })
+        .catch(function (error) {
+            console.log(error);
+            alert(error.response.data.result);
+        });
+}
+
+
+// 게시글 등록 모달 닫기 및 입력값 초기화 함수
+function closeAndClearUpdatePostModal() {
+    const likeModal = document.getElementById('updatePostModal');
+    likeModal.style.display = 'none';
+
+}
+
+
+function openDeletePostModal() {
+    const deletePostModal = document.getElementById('deletePostModal');
+    deletePostModal.style.display = 'block';
+}
+
+function deletePost() {
+    const password = document.getElementById('deletePostUserPassword').value;
+    const postId = document.getElementById('deletePostPostId').value;
+    const deletePostData = {
+        password: password
+    };
+
+    axios.delete(`/api/v1/posts/${postId}`, { data: deletePostData })
+        .then(response => {
+            window.location.href = "/";
+        })
+        .catch(error => {
+            // 댓글 삭제가 실패한 경우, 에러를 콘솔에 출력하고 사용자에게 알림 창을 띄웁니다.
+            console.error("댓글 삭제 오류:", error);
+            alert(error.response.data.result);
+        });
+}
+
+
+// 게시글 등록 모달 닫기 및 입력값 초기화 함수
+function closeAndClearDeletePostModal() {
+    const deleteCommentModal = document.getElementById('deletePostModal');
+    deleteCommentModal.style.display = 'none';
+
+    document.getElementById('deletePostUserPassword').value = '';
+
+}

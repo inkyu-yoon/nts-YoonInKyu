@@ -1,0 +1,34 @@
+<th:block th:fragment="updatePostModalFragment" xmlns:th="http://www.w3.org/1999/html">
+
+    <div class="modal" id="updatePostModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">게시글 수정</h5>
+                </div>
+                <div class="modal-body">
+                    <input type="text" id="updatePostId" th:value = "${post.postId}" style="display: none">
+                    <label for="updatePostUserPassword">비밀번호:</label>
+                    <input type="password" id="updatePostUserPassword" name="password" class="form-control">
+                    <label for="updatePostTitle">게시글 제목:</label>
+                    <input type="text" id="updatePostTitle" name="postTitle" class="form-control">
+                    <label for="updatePostBody">게시글 내용:</label>
+                    <textarea id="updatePostBody" name="postBody" class="form-control"></textarea>
+
+                    <label for="hashtags">해시태그(최대 5개):</label>
+                    <div id="hashtags">
+                        <!-- The first hashtag input field -->
+                        <input type="text" class="form-control mt-1" placeholder="해시태그 입력">
+                    </div>
+                    <button class="btn btn-outline-secondary mt-1" type="button" onclick="addHashtagInput()">추가</button>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="updatePost()">등록</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="closeAndClearUpdatePostModal()">
+                        닫기
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</th:block>

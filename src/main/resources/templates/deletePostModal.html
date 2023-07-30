@@ -1,0 +1,22 @@
+<th:block th:fragment="deletePostModalFragment" xmlns:th="http://www.w3.org/1999/html">
+
+    <div class="modal" id="deletePostModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">게시글 삭제</h5>
+                </div>
+                <div class="modal-body">
+                    <input type="text" id="deletePostPostId" th:value = "${post.postId}" style="display: none">
+
+                    <input type="password" id="deletePostUserPassword" class="form-control" placeholder="회원 비밀번호를 입력하세요">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="deletePost()">삭제</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="closeAndClearDeletePostModal()">닫기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</th:block>
