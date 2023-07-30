@@ -26,6 +26,12 @@ public class ViewController {
 
         model.addAttribute("posts", posts);
         model.addAttribute("postsData", postsData);
+        model.addAttribute("pageSize", pageable.getPageSize());
+        model.addAttribute("numberOfPages", posts.getTotalPages());
+        model.addAttribute("previous", pageable.previousOrFirst().getPageNumber());
+        model.addAttribute("next", pageable.next().getPageNumber());
+        model.addAttribute("searchCondition", searchCondition);
+        model.addAttribute("keyword", keyword);
 
         return "index";
     }

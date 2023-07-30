@@ -24,10 +24,18 @@ function registerUser() {
         });
 }
 
+// 사용자 등록 모달창 닫기
 function closeAndClearModal() {
     const modal = document.getElementById('userModal');
     modal.style.display = 'none';
 
     document.getElementById('username').value = '';
     document.getElementById('password').value = '';
+}
+
+
+// 페이지 단위 조절
+function changePageSize(size) {
+    // 원하는 URL로 이동
+    window.location.href = "?size="+size;
 }

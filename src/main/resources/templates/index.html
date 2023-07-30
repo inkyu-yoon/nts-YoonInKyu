@@ -25,6 +25,12 @@
 <div class="container">
     <h1 class="mt-4 mb-3">게시글 목록</h1>
 
+    <button type="button" class="btn btn-primary" onclick="changePageSize(10)">10개씩 보기</button>
+
+    <button type="button" class="btn btn-primary" onclick="changePageSize(20)">20개씩 보기</button>
+
+    <th:block th:replace="~{searchBox :: searchBoxFragment}"></th:block>
+
     <table class="table table-hover">
         <thead>
         <tr class="table-active">
@@ -55,6 +61,9 @@
         </tr>
         </tbody>
     </table>
+
+    <th:block th:replace="~{pagination :: paginationFragment}"></th:block>
+
 
 
 </div>
