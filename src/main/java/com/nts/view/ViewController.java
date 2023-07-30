@@ -2,6 +2,7 @@ package com.nts.view;
 
 import com.nts.domain.post.dto.PostDataGetResponse;
 import com.nts.domain.post.dto.PostGetPageResponse;
+import com.nts.domain.post.dto.PostGetResponse;
 import com.nts.service.PostService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -11,6 +12,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 
 @RequiredArgsConstructor
@@ -36,4 +38,12 @@ public class ViewController {
         return "index";
     }
 
+    @GetMapping("/posts/{postId}")
+    public String read(@PathVariable(name = "postId") Long postId, Model model, Pageable pageable) {
+
+        PostGetResponse post = postService.getPost(postId);
+        model.addAttribute("post", post);
+
+        return "detail";
+    }
 }
